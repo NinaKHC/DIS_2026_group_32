@@ -1,0 +1,7 @@
+[client]
+showErrorDetails = true
+reruns_button = false
+
+[server]
+runOnSave = true
+fileWatcherType = "poll"
