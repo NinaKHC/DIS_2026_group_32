@@ -2,6 +2,7 @@ import base64
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
@@ -13,57 +14,111 @@ def image_to_base64(image_path: Path) -> str:
 
 
 def find_first_image(assets_dir: Path) -> Path:
-
     for image_path in sorted(assets_dir.iterdir()):
         if image_path.suffix.lower() in IMAGE_EXTENSIONS:
             return image_path
-
     raise FileNotFoundError(f"No image file found in: {assets_dir}")
 
 
-def set_background(image_path: Path) -> None:
-    encoded_image = image_to_base64(image_path)
+def show_start_screen() -> None:
+    feature_dir = Path(__file__).resolve().parents[1]
+    assets_dir = feature_dir / "Assets"
+
+    try:
+        background_path = find_first_image(assets_dir)
+    except FileNotFoundError as error:
+        st.error(str(error))
+        st.stop()
+
+    background_b64 = image_to_base64(background_path)
 
     st.markdown(
-        f"""
+        """
         <style>
-        .stApp {{
-            background-image: url("data:image/png;base64,{encoded_image}");
+        html, body, .stApp {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        [data-testid="stHeader"] {
+            background: rgba(0, 0, 0, 0) !important;
+            height: 0rem !important;
+        }
+
+        [data-testid="stToolbar"],
+        [data-testid="stDecoration"] {
+            display: none !important;
+        }
+
+        .block-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+
+        section.main,
+        div[data-testid="stAppViewContainer"],
+        div[data-testid="stVerticalBlock"] {
+            overflow: hidden !important;
+        }
+
+        iframe {
+            width: 100vw !important;
+            height: 100vh !important;
+            display: block !important;
+            border: none !important;
+        }
+
+        .element-container:has(iframe) {
+            width: 100vw !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+        html, body {{
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }}
+
+        .ss-page {{
+            width: 100vw;
+            height: 100vh;
+            background-image: url("data:image/png;base64,{background_b64}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            position: relative;
         }}
 
-        [data-testid="stHeader"] {{
-            background: rgba(0, 0, 0, 0);
-        }}
-
-        [data-testid="stToolbar"] {{
-            display: none;
-        }}
-
-        .block-container {{
-            padding-top: 0rem;
-            padding-bottom: 0rem;
-            padding-left: 0rem;
-            padding-right: 0rem;
-            max-width: 100%;
-        }}
-
-        .start-screen-title {{
+        .ss-title {{
             text-align: center;
             color: #f5d28a;
-            font-size: 64px;
+            font-size: clamp(28px, 4.5vw, 72px);
             font-weight: 900;
             text-shadow: 3px 3px 8px black;
-            margin-top: 55px;
+            padding-top: 55px;
+            margin: 0;
+            font-family: Georgia, serif;
+            user-select: none;
         }}
 
         .menu-click-zone {{
-            position: fixed;
-            display: block;
-            z-index: 9999;
-            text-decoration: none;
+            position: absolute;
             cursor: pointer;
             background: transparent;
         }}
@@ -83,95 +138,72 @@ def set_background(image_path: Path) -> None:
             opacity: 1;
         }}
 
-        /* START-skilt */
         .start-zone {{
-            left: 17.4vw;
-            top: 70.8vh;
-            width: 15.5vw;
-            height: 17.5vh;
-            clip-path: polygon(
-                13% 6%,
-                88% 6%,
-                96% 94%,
-                6% 94%
-            );
+            left: 17.4%;
+            top: 70.8%;
+            width: 15.5%;
+            height: 17.5%;
+            clip-path: polygon(13% 6%, 88% 6%, 96% 94%, 6% 94%);
         }}
 
         .start-zone::after {{
-            clip-path: polygon(
-                13% 6%,
-                88% 6%,
-                96% 94%,
-                6% 94%
-            );
+            clip-path: polygon(13% 6%, 88% 6%, 96% 94%, 6% 94%);
         }}
 
-        /* EXIT-skilt */
         .exit-zone {{
-            left: 78.3vw;
-            top: 75.2vh;
-            width: 13.5vw;
-            height: 15.8vh;
-            clip-path: polygon(
-                10% 5%,
-                90% 5%,
-                97% 95%,
-                4% 95%
-            );
+            left: 78.3%;
+            top: 75.2%;
+            width: 13.5%;
+            height: 15.8%;
+            clip-path: polygon(10% 5%, 90% 5%, 97% 95%, 4% 95%);
         }}
 
         .exit-zone::after {{
-            clip-path: polygon(
-                10% 5%,
-                90% 5%,
-                97% 95%,
-                4% 95%
-            );
+            clip-path: polygon(10% 5%, 90% 5%, 97% 95%, 4% 95%);
         }}
         </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    </head>
+    <body>
+        <div class="ss-page">
+            <div class="ss-title">JEWEL HEIST DATABASE</div>
 
+            <div
+                class="menu-click-zone start-zone"
+                onclick="navigate('ss_main_menu')"
+                role="button"
+                aria-label="Start">
+            </div>
+            <div
+                class="menu-click-zone exit-zone"
+                onclick="navigate('ss_exit')"
+                role="button"
+                aria-label="Exit">
+            </div>
+        </div>
 
-def handle_start_screen_navigation() -> None:
-    page_from_url = st.query_params.get("page")
+        <script>
+        function navigate(page) {{
+            var buttons = window.parent.document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {{
+                if (buttons[i].innerText.trim() === page) {{
+                    buttons[i].click();
+                    return;
+                }}
+            }}
+        }}
+        </script>
+    </body>
+    </html>
+    """
 
-    if page_from_url == "main_menu":
-        st.session_state["page"] = "main_menu"
-        st.query_params.clear()
-        st.rerun()
+    components.html(html, height=1, scrolling=False)
 
-    if page_from_url == "exit":
-        st.session_state["page"] = "exit"
-        st.query_params.clear()
-        st.rerun()
-
-
-def show_start_screen() -> None:
-    # Denne fil ligger i: Start Screen / Code / start_screen.py
-    # Derfor er parents[1] selve Start Screen-mappen.
-    feature_dir = Path(__file__).resolve().parents[1]
-    assets_dir = feature_dir / "Assets"
-
-    try:
-        background_path = find_first_image(assets_dir)
-    except FileNotFoundError as error:
-        st.error(str(error))
-        st.stop()
-
-    set_background(background_path)
-    handle_start_screen_navigation()
-
-    st.markdown(
-        '<div class="start-screen-title">JEWEL HEIST DATABASE</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        """
-        <a class="menu-click-zone start-zone" href="?page=main_menu" aria-label="Start"></a>
-        <a class="menu-click-zone exit-zone" href="?page=exit" aria-label="Exit"></a>
-        """,
-        unsafe_allow_html=True,
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("ss_main_menu", key="ss_hidden_main_menu"):
+            st.session_state["page"] = "main_menu"
+            st.rerun()
+    with col2:
+        if st.button("ss_exit", key="ss_hidden_exit"):
+            st.session_state["page"] = "exit"
+            st.rerun()

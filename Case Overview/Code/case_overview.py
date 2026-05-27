@@ -1,10 +1,20 @@
 import base64
+import sys
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 SUPPORTED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
+
+project_root = Path(__file__).resolve().parents[2]
+back_button_code_dir = project_root / "Back to main menu" / "Code"
+
+if str(back_button_code_dir) not in sys.path:
+    sys.path.append(str(back_button_code_dir))
+
+from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 
 
 def image_to_base64(image_path: Path) -> str:
@@ -13,7 +23,6 @@ def image_to_base64(image_path: Path) -> str:
 
 
 def find_first_asset_image() -> Path:
-
     case_overview_folder = Path(__file__).resolve().parents[1]
     assets_folder = case_overview_folder / "Assets"
 
@@ -29,95 +38,121 @@ def find_first_asset_image() -> Path:
 
     if not image_files:
         raise FileNotFoundError(
-            f"No image file found in {assets_folder}. "
-            "Add a .png, .jpg, .jpeg, or .webp file."
+            f"No image file found in {assets_folder}."
         )
 
     return image_files[0]
 
 
-def set_case_overview_background(image_path: Path) -> None:
-    encoded_image = image_to_base64(image_path)
+def show_case_overview() -> None:
+    background_path = find_first_asset_image()
+    background_b64 = image_to_base64(background_path)
+
+    back_btn_html = get_back_button_html(btn_key="co_back")
+    back_btn_css = get_back_button_css(left="1.2%", top="2.0%", width="16%")
 
     st.markdown(
-        f"""
+        """
         <style>
-        .stApp {{
-            background-image: url("data:image/png;base64,{encoded_image}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-color: #1c0f08;
-        }}
+        html, body, .stApp {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            background: #1c0f08 !important;
+        }
 
-        [data-testid="stHeader"] {{
-            background: rgba(0, 0, 0, 0);
-        }}
+        [data-testid="stHeader"] {
+            background: rgba(0, 0, 0, 0) !important;
+            height: 0rem !important;
+        }
 
-        [data-testid="stToolbar"] {{
-            display: none;
-        }}
+        [data-testid="stToolbar"],
+        [data-testid="stDecoration"] {
+            display: none !important;
+        }
 
-        .block-container {{
-            padding-top: 0rem;
-            padding-bottom: 0rem;
-            padding-left: 0rem;
-            padding-right: 0rem;
-            max-width: 100%;
-        }}
+        .block-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
 
-        .back-link {{
-            position: fixed;
-            left: 2vw;
-            top: 3vh;
-            z-index: 9999;
-            padding: 12px 22px;
-            background: rgba(25, 15, 8, 0.82);
-            color: #f5d28a !important;
-            border: 2px solid rgba(217, 164, 65, 0.9);
-            border-radius: 12px;
-            text-decoration: none !important;
-            font-size: 20px;
-            font-weight: 800;
-            font-family: Arial, Helvetica, sans-serif;
-            box-shadow: 0px 0px 14px rgba(0, 0, 0, 0.65);
-        }}
+        section.main,
+        div[data-testid="stAppViewContainer"],
+        div[data-testid="stVerticalBlock"] {
+            overflow: hidden !important;
+        }
 
-        .back-link:hover {{
-            background: rgba(80, 55, 28, 0.95);
-            color: #ffd27a !important;
-            border-color: #ffd27a;
-        }}
+        iframe {
+            width: 100vw !important;
+            height: 100vh !important;
+            display: block !important;
+            border: none !important;
+        }
+
+        .element-container:has(iframe) {
+            width: 100vw !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+        html, body {{
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #1c0f08;
+        }}
 
-def handle_case_overview_navigation() -> None:
-    page_from_url = st.query_params.get("page")
+        .co-page {{
+            width: 100vw;
+            height: 100vh;
+            background-image: url("data:image/png;base64,{background_b64}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }}
 
-    if page_from_url == "main_menu":
-        st.session_state["page"] = "main_menu"
-        st.query_params.clear()
-        st.rerun()
+        {back_btn_css}
+        </style>
+    </head>
+    <body>
+        <div class="co-page">
+            {back_btn_html}
+        </div>
+
+        <script>
+        function navigate(page) {{
+            var buttons = window.parent.document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {{
+                if (buttons[i].innerText.trim() === page) {{
+                    buttons[i].click();
+                    return;
+                }}
+            }}
+        }}
+        </script>
+    </body>
+    </html>
+    """
+
+    components.html(html, height=1, scrolling=False)
+
+    render_back_button_streamlit(btn_key="co_back", target_page="main_menu")
 
 
-def show_case_overview() -> None:
-    background_path = find_first_asset_image()
-
-    set_case_overview_background(background_path)
-    handle_case_overview_navigation()
-
-    st.markdown(
-        """
-        <a class="back-link" href="?page=main_menu">← Back to Main Menu</a>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# Backwards compatibility:
-# If app.py still calls the old function name, this keeps it working.
 def show_case_overview_detail() -> None:
     show_case_overview()
