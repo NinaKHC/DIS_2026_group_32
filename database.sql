@@ -53,6 +53,39 @@ CREATE TABLE Statement (
 start transaction;
 
 INSERT INTO Person VALUES
+(1, 'Sofia Laurent',
+ 'female',
+ 'auburn',
+ 'green',
+ 'mediumbrown',
+ 'navy blazer, cream blouse, charcoal trousers, brown loafers, gold accessories',
+ 'investigator',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(2, 'Maya Johnson',
+ 'female',
+ 'darkbrown',
+ 'brown',
+ 'darkbrown',
+ 'olive overshirt, brown coffee t-shirt, black cafe apron, patterned brown cargo pants, black high-top sneakers',
+ 'cafe employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(3, 'Alex Wren',
+ 'nonbinary',
+ 'tealblack',
+ 'darkbrown',
+ 'fair',
+ 'charcoal cardigan, mustard scarf, burgundy trousers, round glasses, brown loafers, staff lanyard',
+ 'bookstore employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
 (4, 'Marcus Reed',
  'male',
  'black',
@@ -126,39 +159,6 @@ INSERT INTO Person VALUES
  'mediumbrown',
  'sage bomber jacket, cream hoodie, black cargo pants, green-white high-top sneakers',
  'customer',
- FALSE
-);
-
-INSERT INTO Person VALUES
-(1, 'Sofia Laurent',
- 'female',
- 'auburn',
- 'green',
- 'mediumbrown',
- 'navy blazer, cream blouse, charcoal trousers, brown loafers, gold accessories',
- 'investigator',
- FALSE
-);
-
-INSERT INTO Person VALUES
-(2, 'Maya Johnson',
- 'female',
- 'darkbrown',
- 'brown',
- 'darkbrown',
- 'olive overshirt, brown coffee t-shirt, black cafe apron, patterned brown cargo pants, black high-top sneakers',
- 'cafe employee',
- FALSE
-);
-
-INSERT INTO Person VALUES
-(3, 'Alex Wren',
- 'nonbinary',
- 'tealblack',
- 'darkbrown',
- 'fair',
- 'charcoal cardigan, mustard scarf, burgundy trousers, round glasses, brown loafers, staff lanyard',
- 'bookstore employee',
  FALSE
 );
 
