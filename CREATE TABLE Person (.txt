@@ -1,0 +1,118 @@
+CREATE TABLE Person (
+    person_id INTEGER PRIMARY KEY,
+    name VARCHAR(50),
+    hair_color VARCHAR(50),
+    eye_color VARCHAR(50),
+    skin_color VARCHAR(50),
+    clothing VARCHAR(200),
+    role VARCHAR(50),
+    is_suspect BOOLEAN
+);
+
+
+
+
+INSERT INTO Person VALUES
+(4, 'Marcus Reed',
+ 'black / shaved',
+ 'brown',
+ 'light brown',
+ 'striped shirt, tan bakery apron, dark rolled trousers, green beanie, brown work boots',
+ 'bakery employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(5, 'Elena Bloom',
+ 'dark brown with grey streaks',
+ 'green',
+ 'medium olive',
+ 'cream blouse, sage-green florist apron, rust midi skirt, brown lace-up boots',
+ 'florist employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(6, 'Rafael Moreno',
+ 'dark brown with grey streaks',
+ 'brown',
+ 'tan',
+ 'burgundy overshirt, dark t-shirt, khaki trousers, brown messenger bag, worn sneakers',
+ 'witness',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(7, 'Luna Hart',
+ 'strawberry blonde braids',
+ 'blue',
+ 'fair',
+ 'charcoal beanie, denim vest, cream graphic sweatshirt, black skirt, black tights, platform sneakers',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(8, 'Nia Carter',
+ 'dark curly hair with copper highlights',
+ 'hazel',
+ 'dark brown',
+ 'rust-orange cropped jacket, black graphic crop top, wide blue jeans, black chunky boots',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(9, 'Rowan Vale',
+ 'silver grey buzz cut',
+ 'grey green',
+ 'light olive',
+ 'long plaid overshirt, black top, tan trousers, belt chain, black skate sneakers',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(10, 'Jamal Brooks',
+ 'short black twists',
+ 'brown',
+ 'medium brown',
+ 'sage bomber jacket, cream hoodie, black cargo pants, green-white high-top sneakers',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(1, 'Sofia Laurent',
+ 'auburn wavy hair',
+ 'green',
+ 'warm medium brown',
+ 'navy blazer, cream blouse, charcoal trousers, brown loafers, gold accessories',
+ 'investigator',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(2, 'Maya Johnson',
+ 'dark brown locs',
+ 'brown',
+ 'medium dark brown',
+ 'olive overshirt, brown coffee t-shirt, black cafe apron, patterned brown cargo pants, black high-top sneakers',
+ 'cafe employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(3, 'Alex Wren',
+ 'dark teal-black hair',
+ 'dark brown',
+ 'fair',
+ 'charcoal cardigan, mustard scarf, burgundy trousers, round glasses, brown loafers, staff lanyard',
+ 'bookstore employee',
+ FALSE
+);
+
+
+
+
+
