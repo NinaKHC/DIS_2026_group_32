@@ -12,11 +12,15 @@ CREATE TABLE Person (
 
 
 
+
+
+
 INSERT INTO Person VALUES
 (4, 'Marcus Reed',
- 'black / shaved',
+ 'male',
+ 'black',
  'brown',
- 'light brown',
+ 'lightbrown',
  'striped shirt, tan bakery apron, dark rolled trousers, green beanie, brown work boots',
  'bakery employee',
  FALSE
@@ -24,9 +28,10 @@ INSERT INTO Person VALUES
 
 INSERT INTO Person VALUES
 (5, 'Elena Bloom',
- 'dark brown with grey streaks',
+ 'female',
+ 'greybrown',
  'green',
- 'medium olive',
+ 'olive',
  'cream blouse, sage-green florist apron, rust midi skirt, brown lace-up boots',
  'florist employee',
  FALSE
@@ -34,7 +39,8 @@ INSERT INTO Person VALUES
 
 INSERT INTO Person VALUES
 (6, 'Rafael Moreno',
- 'dark brown with grey streaks',
+ 'male',
+ 'darkbrown',
  'brown',
  'tan',
  'burgundy overshirt, dark t-shirt, khaki trousers, brown messenger bag, worn sneakers',
@@ -44,7 +50,8 @@ INSERT INTO Person VALUES
 
 INSERT INTO Person VALUES
 (7, 'Luna Hart',
- 'strawberry blonde braids',
+ 'female',
+ 'strawberryblonde',
  'blue',
  'fair',
  'charcoal beanie, denim vest, cream graphic sweatshirt, black skirt, black tights, platform sneakers',
@@ -54,9 +61,10 @@ INSERT INTO Person VALUES
 
 INSERT INTO Person VALUES
 (8, 'Nia Carter',
- 'dark curly hair with copper highlights',
+ 'female',
+ 'darkbrown',
  'hazel',
- 'dark brown',
+ 'darkbrown',
  'rust-orange cropped jacket, black graphic crop top, wide blue jeans, black chunky boots',
  'customer',
  TRUE
@@ -64,9 +72,10 @@ INSERT INTO Person VALUES
 
 INSERT INTO Person VALUES
 (9, 'Rowan Vale',
- 'silver grey buzz cut',
- 'grey green',
- 'light olive',
+ 'nonbinary',
+ 'silvergrey',
+ 'greygreen',
+ 'olive',
  'long plaid overshirt, black top, tan trousers, belt chain, black skate sneakers',
  'customer',
  TRUE
@@ -74,9 +83,10 @@ INSERT INTO Person VALUES
 
 INSERT INTO Person VALUES
 (10, 'Jamal Brooks',
- 'short black twists',
+ 'male',
+ 'black',
  'brown',
- 'medium brown',
+ 'mediumbrown',
  'sage bomber jacket, cream hoodie, black cargo pants, green-white high-top sneakers',
  'customer',
  TRUE
@@ -84,9 +94,10 @@ INSERT INTO Person VALUES
 
 INSERT INTO Person VALUES
 (1, 'Sofia Laurent',
- 'auburn wavy hair',
+ 'female',
+ 'auburn',
  'green',
- 'warm medium brown',
+ 'mediumbrown',
  'navy blazer, cream blouse, charcoal trousers, brown loafers, gold accessories',
  'investigator',
  FALSE
@@ -94,9 +105,10 @@ INSERT INTO Person VALUES
 
 INSERT INTO Person VALUES
 (2, 'Maya Johnson',
- 'dark brown locs',
+ 'female',
+ 'darkbrown',
  'brown',
- 'medium dark brown',
+ 'darkbrown',
  'olive overshirt, brown coffee t-shirt, black cafe apron, patterned brown cargo pants, black high-top sneakers',
  'cafe employee',
  FALSE
@@ -104,8 +116,9 @@ INSERT INTO Person VALUES
 
 INSERT INTO Person VALUES
 (3, 'Alex Wren',
- 'dark teal-black hair',
- 'dark brown',
+ 'nonbinary',
+ 'tealblack',
+ 'darkbrown',
  'fair',
  'charcoal cardigan, mustard scarf, burgundy trousers, round glasses, brown loafers, staff lanyard',
  'bookstore employee',
@@ -116,3 +129,223 @@ INSERT INTO Person VALUES
 
 
 
+
+INSERT INTO Person VALUES
+(11, 'Clara Finch',
+ 'female',
+ 'red',
+ 'green',
+ 'fair',
+ 'teal beanie, oversized teal sweater, white shirt, plaid trousers, messenger bag with pins, chunky cream sneakers',
+ 'reporter',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(12, 'Isabella Cruz',
+ 'female',
+ 'covered',
+ 'brown',
+ 'darkbrown',
+ 'yellow cropped jacket, teal patterned jumpsuit, brown crossbody bag, gold earrings, colorful bracelets, white sneakers',
+ 'market employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(13, 'Hiro Tanaka',
+ 'male',
+ 'silvergrey',
+ 'brown',
+ 'tan',
+ 'dark blue work coat, cream shirt, blue striped scarf, grey trousers, brown tool bag, brown work boots',
+ 'watchmaker',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(14, 'Priya Kapoor',
+ 'female',
+ 'blackgrey',
+ 'brown',
+ 'mediumbrown',
+ 'green long coat, mustard tunic, patterned maroon scarf, maroon wide trousers, brown boots, gold jewelry',
+ 'art dealer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(15, 'Rex Voss',
+ 'male',
+ 'platinumblonde',
+ 'brown',
+ 'fair',
+ 'black leather jacket, burgundy graphic t-shirt, ripped dark green jeans, chains, fingerless gloves, black combat boots',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(16, 'Amara Rodriguez',
+ 'female',
+ 'darkbrown',
+ 'amberbrown',
+ 'mediumbrown',
+ 'navy jewelry-store dress, cream cardigan, navy scarf, name tag, gold earrings, navy flats with gold diamond detail',
+ 'jewelry employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(17, 'Eleanor Whitmore',
+ 'female',
+ 'silvergrey',
+ 'green',
+ 'fair',
+ 'cream blouse, navy vest, navy long skirt, navy scarf, reading glasses, name tag, navy low heels',
+ 'senior jewelry employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(18, 'Jordan Ellis',
+ 'nonbinary',
+ 'auburn',
+ 'hazel',
+ 'olive',
+ 'navy suit, cream turtleneck, name tag, gold necklace, navy loafers',
+ 'jewelry employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(19, 'James Thompson',
+ 'male',
+ 'black',
+ 'brown',
+ 'darkbrown',
+ 'cream shirt, navy vest with gold trim, navy tie, navy trousers, name tag, brown dress shoes',
+ 'jewelry employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(20, 'Mei Sato',
+ 'female',
+ 'darkbrown',
+ 'brown',
+ 'fair',
+ 'navy blazer, cream blouse, navy pencil skirt, navy neck scarf, name tag, black heels',
+ 'jewelry employee',
+ FALSE
+);
+
+INSERT INTO Person VALUES
+(21, 'Valentina Moretti',
+ 'female',
+ 'darkbrown',
+ 'hazel',
+ 'mediumbrown',
+ 'pink trench coat, teal blouse, white wide-leg trousers, gold earrings, bracelets, metallic bronze boots',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(22, 'Arthur Kingsley',
+ 'male',
+ 'white',
+ 'brown',
+ 'darkbrown',
+ 'teal blazer, cream turtleneck, grey trousers, grey flat cap, glasses, cane, burgundy dress shoes',
+ 'collector',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(23, 'Yumi Nakamura',
+ 'female',
+ 'black',
+ 'brown',
+ 'fair',
+ 'coral bomber jacket, white graphic t-shirt, navy pleated skirt, black knee socks, white sneakers, black crossbody bag',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(24, 'Bruno Vargas',
+ 'male',
+ 'black',
+ 'brown',
+ 'tan',
+ 'orange utility vest, light blue shirt, olive cargo trousers, black watch, tan work boots',
+ 'delivery driver',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(25, 'Margaret Green',
+ 'female',
+ 'white',
+ 'brown',
+ 'fair',
+ 'lavender cardigan, yellow blouse, emerald green long skirt, pearl earrings, glasses, burgundy shoes',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(26, 'Scarlett Hayes',
+ 'female',
+ 'red',
+ 'blue',
+ 'fair',
+ 'teal blouse, black pencil skirt, black tights, gold earrings, black loafers',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(27, 'Nova Blake',
+ 'nonbinary',
+ 'silvergrey',
+ 'green',
+ 'mediumbrown',
+ 'mustard shirt, black turtleneck, black trousers, black boots, watch, necklace',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(28, 'Adrian Wolfe',
+ 'male',
+ 'brown',
+ 'hazel',
+ 'olive',
+ 'tan trench coat, black turtleneck, dark trousers, black belt, black loafers',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(29, 'Zara Monroe',
+ 'female',
+ 'blonde',
+ 'brown',
+ 'darkbrown',
+ 'burgundy turtleneck, beige trousers, brown belt, gold necklace, brown heeled boots',
+ 'customer',
+ TRUE
+);
+
+INSERT INTO Person VALUES
+(30, 'Daniel Pierce',
+ 'male',
+ 'brown',
+ 'blue',
+ 'fair',
+ 'dark green jacket, cream shirt, dark blue jeans, brown belt, brown dress shoes',
+ 'customer',
+ TRUE
+);
