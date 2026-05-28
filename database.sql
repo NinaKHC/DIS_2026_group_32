@@ -55,10 +55,10 @@ start transaction;
 INSERT INTO Person VALUES
 (1, 'Sofia Laurent',
  'female',
- 'auburn',
+ 'red',
  'green',
  'mediumbrown',
- 'navy blazer, cream blouse, charcoal trousers, brown loafers, gold accessories',
+ 'blue blazer, white blouse, grey trousers, brown shoes, gold jewelry',
  'investigator',
  FALSE
 );
@@ -69,7 +69,7 @@ INSERT INTO Person VALUES
  'darkbrown',
  'brown',
  'darkbrown',
- 'olive overshirt, brown coffee t-shirt, black cafe apron, patterned brown cargo pants, black high-top sneakers',
+ 'green shirt, brown t-shirt, black apron, brown pants, black sneakers',
  'cafe employee',
  FALSE
 );
@@ -77,10 +77,10 @@ INSERT INTO Person VALUES
 INSERT INTO Person VALUES
 (3, 'Alex Wren',
  'nonbinary',
- 'tealblack',
+ 'black',
  'darkbrown',
  'fair',
- 'charcoal cardigan, mustard scarf, burgundy trousers, round glasses, brown loafers, staff lanyard',
+ 'grey cardigan, yellow scarf, red trousers, glasses, brown shoes, staff lanyard',
  'bookstore employee',
  FALSE
 );
@@ -91,7 +91,7 @@ INSERT INTO Person VALUES
  'black',
  'brown',
  'lightbrown',
- 'striped shirt, tan bakery apron, dark rolled trousers, green beanie, brown work boots',
+ 'striped shirt, brown apron, dark trousers, green beanie, brown boots',
  'bakery employee',
  FALSE
 );
@@ -102,7 +102,7 @@ INSERT INTO Person VALUES
  'greybrown',
  'green',
  'olive',
- 'cream blouse, sage-green florist apron, rust midi skirt, brown lace-up boots',
+ 'white blouse, green apron, red skirt, brown boots',
  'florist employee',
  FALSE
 );
@@ -113,7 +113,7 @@ INSERT INTO Person VALUES
  'darkbrown',
  'brown',
  'tan',
- 'burgundy overshirt, dark t-shirt, khaki trousers, brown messenger bag, worn sneakers',
+ 'red shirt, black t-shirt, brown pants, brown bag, sneakers',
  'witness',
  FALSE
 );
@@ -121,10 +121,10 @@ INSERT INTO Person VALUES
 INSERT INTO Person VALUES
 (7, 'Luna Hart',
  'female',
- 'strawberryblonde',
+ 'blonde',
  'blue',
  'fair',
- 'charcoal beanie, denim vest, cream graphic sweatshirt, black skirt, black tights, platform sneakers',
+ 'grey beanie, blue vest, white sweater, black skirt, sneakers',
  'customer',
  FALSE
 );
@@ -135,7 +135,7 @@ INSERT INTO Person VALUES
  'darkbrown',
  'hazel',
  'darkbrown',
- 'rust-orange cropped jacket, black graphic crop top, wide blue jeans, black chunky boots',
+ 'orange jacket, black top, blue jeans, black boots',
  'customer',
  FALSE
 );
@@ -146,7 +146,7 @@ INSERT INTO Person VALUES
  'silvergrey',
  'greygreen',
  'olive',
- 'long plaid overshirt, black top, tan trousers, belt chain, black skate sneakers',
+ 'grey shirt, black top, brown pants, black sneakers',
  'customer',
  FALSE
 );
@@ -157,7 +157,7 @@ INSERT INTO Person VALUES
  'black',
  'brown',
  'mediumbrown',
- 'sage bomber jacket, cream hoodie, black cargo pants, green-white high-top sneakers',
+ 'green jacket, white sweater, black pants, green sneakers',
  'customer',
  FALSE
 );
@@ -168,7 +168,7 @@ INSERT INTO Person VALUES
  'red',
  'green',
  'fair',
- 'teal beanie, oversized teal sweater, white shirt, plaid trousers, messenger bag with pins, chunky cream sneakers',
+ 'blue beanie, green sweater, white shirt, grey pants, bag, sneakers',
  'reporter',
  FALSE
 );
@@ -179,7 +179,7 @@ INSERT INTO Person VALUES
  'covered',
  'brown',
  'darkbrown',
- 'yellow cropped jacket, teal patterned jumpsuit, brown crossbody bag, gold earrings, colorful bracelets, white sneakers',
+ 'yellow jacket, blue jumpsuit, brown bag, gold earrings, white sneakers',
  'market employee',
  FALSE
 );
@@ -190,7 +190,7 @@ INSERT INTO Person VALUES
  'silvergrey',
  'brown',
  'tan',
- 'dark blue work coat, cream shirt, blue striped scarf, grey trousers, brown tool bag, brown work boots',
+ 'dark blue coat, white shirt, blue scarf, grey trousers, brown bag, brown boots',
  'watchmaker',
  FALSE
 );
@@ -201,7 +201,7 @@ INSERT INTO Person VALUES
  'blackgrey',
  'brown',
  'mediumbrown',
- 'green long coat, mustard tunic, patterned maroon scarf, maroon wide trousers, brown boots, gold jewelry',
+ 'green coat, yellow shirt, red scarf, red pants, brown boots, gold jewelry',
  'art dealer',
  FALSE
 );
@@ -212,7 +212,7 @@ INSERT INTO Person VALUES
  'platinumblonde',
  'brown',
  'fair',
- 'black leather jacket, burgundy graphic t-shirt, ripped dark green jeans, chains, fingerless gloves, black combat boots',
+ 'black leather jacket, red t-shirt, green jeans, chains, gloves, black boots',
  'customer',
  FALSE
 );
@@ -223,7 +223,7 @@ INSERT INTO Person VALUES
  'darkbrown',
  'amberbrown',
  'mediumbrown',
- 'navy jewelry-store dress, cream cardigan, navy scarf, name tag, gold earrings, navy flats with gold diamond detail',
+ 'blue dress, white cardigan, blue scarf, name tag, gold earrings, blue shoes',
  'jewelry employee',
  FALSE
 );
@@ -234,7 +234,7 @@ INSERT INTO Person VALUES
  'silvergrey',
  'green',
  'fair',
- 'cream blouse, navy vest, navy long skirt, navy scarf, reading glasses, name tag, navy low heels',
+ 'white blouse, blue vest, blue long skirt, blue scarf, glasses, name tag, blue shoes',
  'senior jewelry employee',
  FALSE
 );
@@ -242,10 +242,10 @@ INSERT INTO Person VALUES
 INSERT INTO Person VALUES
 (18, 'Jordan Ellis',
  'nonbinary',
- 'auburn',
+ 'red',
  'hazel',
  'olive',
- 'navy suit, cream turtleneck, name tag, gold necklace, navy loafers',
+ 'blue suit, white turtleneck, name tag, gold necklace, blue shoes',
  'jewelry employee',
  FALSE
 );
@@ -256,7 +256,7 @@ INSERT INTO Person VALUES
  'black',
  'brown',
  'darkbrown',
- 'cream shirt, navy vest with gold trim, navy tie, navy trousers, name tag, brown dress shoes',
+ 'white shirt, blue vest, blue tie, blue trousers, name tag, brown shoes',
  'jewelry employee',
  FALSE
 );
@@ -267,7 +267,7 @@ INSERT INTO Person VALUES
  'darkbrown',
  'brown',
  'fair',
- 'navy blazer, cream blouse, navy pencil skirt, navy neck scarf, name tag, black heels',
+ 'blue blazer, white blouse, blue skirt, blue scarf, name tag, black shoes',
  'jewelry employee',
  FALSE
 );
@@ -278,7 +278,7 @@ INSERT INTO Person VALUES
  'darkbrown',
  'hazel',
  'mediumbrown',
- 'pink trench coat, teal blouse, white wide-leg trousers, gold earrings, bracelets, metallic bronze boots',
+ 'pink coat, blue blouse, white pants, gold earrings, bracelets, shoes',
  'customer',
  FALSE
 );
@@ -289,7 +289,7 @@ INSERT INTO Person VALUES
  'white',
  'brown',
  'darkbrown',
- 'teal blazer, cream turtleneck, grey trousers, grey flat cap, glasses, cane, burgundy dress shoes',
+ 'blue blazer, white turtleneck, grey trousers, grey cap, glasses, cane, red shoes',
  'collector',
  FALSE
 );
@@ -300,7 +300,7 @@ INSERT INTO Person VALUES
  'black',
  'brown',
  'fair',
- 'coral bomber jacket, white graphic t-shirt, navy pleated skirt, black knee socks, white sneakers, black crossbody bag',
+ 'red jacket, white t-shirt, blue skirt, black socks, white sneakers, black bag',
  'customer',
  FALSE
 );
@@ -311,7 +311,7 @@ INSERT INTO Person VALUES
  'black',
  'brown',
  'tan',
- 'orange utility vest, light blue shirt, olive cargo trousers, black watch, tan work boots',
+ 'orange vest, blue shirt, green pants, black watch, brown boots',
  'delivery driver',
  FALSE
 );
@@ -322,7 +322,7 @@ INSERT INTO Person VALUES
  'white',
  'brown',
  'fair',
- 'lavender cardigan, yellow blouse, emerald green long skirt, pearl earrings, glasses, burgundy shoes',
+ 'purple cardigan, yellow blouse, green long skirt, pearl earrings, glasses, red shoes',
  'customer',
  FALSE
 );
@@ -333,7 +333,7 @@ INSERT INTO Person VALUES
  'red',
  'blue',
  'fair',
- 'teal blouse, black pencil skirt, black tights, gold earrings, black loafers',
+ 'blue blouse, black skirt, black tights, gold earrings, black shoes',
  'customer',
  FALSE
 );
@@ -344,7 +344,7 @@ INSERT INTO Person VALUES
  'silvergrey',
  'green',
  'mediumbrown',
- 'mustard shirt, black turtleneck, black trousers, black boots, watch, necklace',
+ 'yellow shirt, black turtleneck, black trousers, black boots, watch, necklace',
  'customer',
  FALSE
 );
@@ -355,7 +355,7 @@ INSERT INTO Person VALUES
  'brown',
  'hazel',
  'olive',
- 'tan trench coat, black turtleneck, dark trousers, black belt, black loafers',
+ 'brown coat, black turtleneck, dark trousers, black belt, black shoes',
  'customer',
  FALSE
 );
@@ -366,7 +366,7 @@ INSERT INTO Person VALUES
  'blonde',
  'brown',
  'darkbrown',
- 'burgundy turtleneck, beige trousers, brown belt, gold necklace, brown heeled boots',
+ 'red turtleneck, brown trousers, brown belt, gold necklace, brown boots',
  'customer',
  FALSE
 );
@@ -377,11 +377,10 @@ INSERT INTO Person VALUES
  'brown',
  'blue',
  'fair',
- 'dark green jacket, cream shirt, dark blue jeans, brown belt, brown dress shoes',
+ 'green jacket, white shirt, blue jeans, brown belt, brown shoes',
  'customer',
  FALSE
 );
-
 
 INSERT INTO Presence VALUES
 (1, 1, '2026-05-12 13:05:00', '2026-05-12 18:00:00', TRUE);
