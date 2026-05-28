@@ -1,9 +1,9 @@
 -- database.sql
 
-DROP TABLE IF EXISTS Person;
-DROP TABLE IF EXISTS Presence;
-DROP TABLE IF EXISTS Item_stolen;
 DROP TABLE IF EXISTS Statement;
+DROP TABLE IF EXISTS Item_stolen;
+DROP TABLE IF EXISTS Presence;
+DROP TABLE IF EXISTS Person;
 
 CREATE TABLE Person (
     person_id INTEGER PRIMARY KEY,
