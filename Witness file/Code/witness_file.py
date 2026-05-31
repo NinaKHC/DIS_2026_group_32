@@ -6,6 +6,8 @@ from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
 
+from sqlalchemy import text
+
 
 project_root = Path(__file__).resolve().parents[2]
 back_button_code_dir = project_root / "Back to main menu" / "Code"
@@ -41,9 +43,17 @@ CREATE TABLE witnesses (
 """
 
 
-WITNESSES = [
-    {
-        "full_name": "",
+conn = st.connection("postgresql", type="sql")
+#    witness["full_name"] = conn.query('SELECT name FROM Person;', ttl="0m")
+
+num_witnesses = conn.session.execute(text("SELECT COUNT(*) FROM Person;")).first()[0]
+names = conn.session.execute(text("SELECT name FROM Person;")).all()
+id = conn.session.execute(text("SELECT person_id FROM Person;")).all()
+occupation = conn.session.execute(text("SELECT role FROM Person;")).all()
+clothing = conn.session.execute(text("SELECT clothing FROM Person")).all()
+
+WITNESSES = [{
+        "full_name": "test",
         "occupation": "",
         "age": "",
         "date_of_birth": "",
@@ -54,14 +64,16 @@ WITNESSES = [
         "alibi": "",
         "witness_statement": "",
         "photo": None,
-    },
-]
+    } for x in range(num_witnesses)]
 
+for i in range(num_witnesses):
+    WITNESSES[id[i][0] - 1]["full_name"] = names[i][0]
+    WITNESSES[id[i][0] - 1]["occupation"] = occupation[i][0]
+    WITNESSES[id[i][0] - 1]["clothing"] = clothing[i][0]
 
 def image_to_base64(image_path: Path) -> str:
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode()
-
 
 def find_background_image(assets_dir: Path) -> Path:
     for file_path in sorted(assets_dir.iterdir()):
@@ -229,8 +241,8 @@ def show_witnesses() -> None:
         /* Feltværdier oven på de stiplede linjer på højre side */
         .witness-fields {{
             position: absolute;
-            left: 55.5%;
-            top: 10%;
+            left: 53%;
+            top: 17%;
             width: 39%;
             z-index: 3;
             display: flex;
@@ -242,19 +254,19 @@ def show_witnesses() -> None:
         .wf-row {{
             display: flex;
             align-items: baseline;
-            height: 8.2%;
+            height: 55px;
         }}
 
         .wf-row-double {{
             display: flex;
             align-items: baseline;
-            height: 8.2%;
+            height: 52px;
         }}
 
         .wf-row-tall {{
             display: flex;
             align-items: flex-start;
-            height: 14%;
+            height: 104px;
         }}
 
         .wf-value {{
@@ -291,6 +303,27 @@ def show_witnesses() -> None:
             line-height: 1.55;
             padding-left: 0.15em;
             flex: 1;
+        }}
+        .wf-value-name{{
+            position: relative;
+            left: 172px;
+            font-size: 170%;
+            top: 40%;
+        }}
+        .wf-value-occupation{{
+            position: relative;
+            top: 14px;
+            left: 172px;
+            font-size: 170%;
+            top: 39%;
+        }}
+        .wf-value-clothing{{
+            position: relative;
+            max-width: 62%;
+            text-indent: 23%;
+            font-size: 120%;
+            top: 12%;
+            line-height: 240%
         }}
 
         {back_btn_css}
@@ -342,10 +375,10 @@ def show_witnesses() -> None:
 
                 <div class="witness-fields">
                     <div class="wf-row">
-                        <span class="wf-value">{witness['full_name']}</span>
+                        <span class="wf-value-name">{witness['full_name']}</span>
                     </div>
                     <div class="wf-row">
-                        <span class="wf-value">{witness['occupation']}</span>
+                        <span class="wf-value-occupation">{witness['occupation']}</span>
                     </div>
                     <div class="wf-row-double">
                         <span class="wf-value-age">{witness['age']}</span>
@@ -355,7 +388,7 @@ def show_witnesses() -> None:
                         <span class="wf-value-statement">{witness['personal_characteristics']}</span>
                     </div>
                     <div class="wf-row-tall">
-                        <span class="wf-value-statement">{witness['clothing']}</span>
+                        <span class="wf-value-clothing">{witness['clothing']}</span>
                     </div>
                     <div class="wf-row-tall">
                         <span class="wf-value-statement">{witness['distinguishing_features']}</span>
