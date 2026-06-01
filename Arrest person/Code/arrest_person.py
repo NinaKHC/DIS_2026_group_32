@@ -27,7 +27,7 @@ try:
     if str(suspects_dir) not in sys.path:
         sys.path.append(str(suspects_dir))
     from suspects import SUSPECTS, _person_to_suspect
-except Exception:
+except ImportError:
     SUSPECTS = []
     _person_to_suspect = None
 
