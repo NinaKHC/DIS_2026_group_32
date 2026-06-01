@@ -13,6 +13,7 @@ back_button_code_dir = project_root / "Back to main menu" / "Code"
 screen_arrows_code_dir = project_root / "Screen arrows" / "Code"
 witness_button_code_dir = project_root / "Witness shortcut" / "Code"
 witness_file_code_dir = project_root / "Witness file" / "Code"
+database_code_dir = project_root / "Database" / "Code"
 
 if str(back_button_code_dir) not in sys.path:
     sys.path.append(str(back_button_code_dir))
@@ -20,6 +21,8 @@ if str(screen_arrows_code_dir) not in sys.path:
     sys.path.append(str(screen_arrows_code_dir))
 if str(witness_file_code_dir) not in sys.path:
     sys.path.append(str(witness_file_code_dir))
+if str(database_code_dir) not in sys.path:
+    sys.path.append(str(database_code_dir))
 if str(witness_button_code_dir) in sys.path:
     sys.path.remove(str(witness_button_code_dir))
 sys.path.insert(0, str(witness_button_code_dir))
@@ -30,6 +33,7 @@ sys.modules.pop("witness_button", None)
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 from screen_arrows import screen_arrow_css, make_screen_arrow_button
+from person_birth_details import get_person_birth_details
 from witness_button import (
     get_witness_file_button_css,
     get_witness_file_button_html,
@@ -52,39 +56,6 @@ IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 # "photo" kan være en absolut sti til et billede, eller None.
 CHARS_DIR = project_root / "Characters"
 
-
-PERSON_BIRTH_DETAILS = {
-    1: {"age": "34", "date_of_birth": "14/02/1992"},
-    2: {"age": "29", "date_of_birth": "03/08/1996"},
-    3: {"age": "31", "date_of_birth": "19/11/1994"},
-    4: {"age": "42", "date_of_birth": "27/04/1984"},
-    5: {"age": "38", "date_of_birth": "09/06/1987"},
-    6: {"age": "35", "date_of_birth": "22/01/1991"},
-    7: {"age": "24", "date_of_birth": "16/09/2001"},
-    8: {"age": "27", "date_of_birth": "30/03/1999"},
-    9: {"age": "33", "date_of_birth": "05/12/1992"},
-    10: {"age": "40", "date_of_birth": "11/07/1985"},
-    11: {"age": "32", "date_of_birth": "25/10/1993"},
-    12: {"age": "36", "date_of_birth": "08/05/1990"},
-    13: {"age": "58", "date_of_birth": "17/01/1968"},
-    14: {"age": "45", "date_of_birth": "29/09/1980"},
-    15: {"age": "30", "date_of_birth": "06/06/1995"},
-    16: {"age": "28", "date_of_birth": "13/04/1998"},
-    17: {"age": "61", "date_of_birth": "02/12/1964"},
-    18: {"age": "26", "date_of_birth": "21/07/1999"},
-    19: {"age": "39", "date_of_birth": "18/02/1987"},
-    20: {"age": "33", "date_of_birth": "12/10/1992"},
-    21: {"age": "41", "date_of_birth": "04/03/1985"},
-    22: {"age": "67", "date_of_birth": "26/08/1958"},
-    23: {"age": "23", "date_of_birth": "15/05/2003"},
-    24: {"age": "37", "date_of_birth": "01/11/1988"},
-    25: {"age": "72", "date_of_birth": "20/04/1954"},
-    26: {"age": "25", "date_of_birth": "07/01/2001"},
-    27: {"age": "29", "date_of_birth": "24/06/1996"},
-    28: {"age": "44", "date_of_birth": "10/09/1981"},
-    29: {"age": "31", "date_of_birth": "28/12/1994"},
-    30: {"age": "46", "date_of_birth": "05/02/1980"},
-}
 
 
 def _character_photo_path(person_id: int) -> str | None:
@@ -207,10 +178,7 @@ def _suspect_fields_html(suspect: dict) -> str:
 
 def _person_to_suspect(person: dict) -> dict:
     person_id = person.get("id", 0)
-    birth_details = PERSON_BIRTH_DETAILS.get(
-        person_id,
-        {"age": "", "date_of_birth": ""},
-    )
+    birth_details = get_person_birth_details(person_id)
     role = person.get("role", "")
     arrived = person.get("arrived", "")
     left = person.get("left", "")
@@ -717,3 +685,4 @@ def show_suspects() -> None:
                     st.session_state.suspect_index + 1
                 ) % total_suspects
                 st.rerun()
+
