@@ -1,4 +1,5 @@
 import base64
+import sys
 from pathlib import Path
 
 import streamlit as st
@@ -6,6 +7,19 @@ import streamlit.components.v1 as components
 
 
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
+
+project_root = Path(__file__).resolve().parents[2]
+start_game_code_dir = project_root / "Start Game" / "Code"
+
+if str(start_game_code_dir) not in sys.path:
+    sys.path.append(str(start_game_code_dir))
+
+try:
+    from start_game import start_new_game, continue_game, is_game_started
+except ImportError:
+    start_new_game = None
+    continue_game = None
+    is_game_started = None
 
 
 def image_to_base64(image_path: Path) -> str:
@@ -169,7 +183,7 @@ def show_start_screen() -> None:
 
             <div
                 class="menu-click-zone start-zone"
-                onclick="navigate('ss_main_menu')"
+                onclick="navigate('ss_start_game')"
                 role="button"
                 aria-label="Start">
             </div>
@@ -200,9 +214,18 @@ def show_start_screen() -> None:
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("ss_main_menu", key="ss_hidden_main_menu"):
+        if st.button("ss_start_game", key="ss_hidden_start_game"):
+            if start_new_game is None:
+                st.error(
+                    "Could not import start_game.py. "
+                    "Check that it is placed in: Start Game/Code/start_game.py"
+                )
+                st.stop()
+
+            start_new_game(start_page="main_menu")
             st.session_state["page"] = "main_menu"
             st.rerun()
+
     with col2:
         if st.button("ss_exit", key="ss_hidden_exit"):
             st.session_state["page"] = "exit"

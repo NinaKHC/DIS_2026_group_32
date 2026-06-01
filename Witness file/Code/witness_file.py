@@ -1,4 +1,5 @@
 import base64
+import html
 import sys
 from pathlib import Path
 
@@ -10,52 +11,267 @@ import streamlit.components.v1 as components
 project_root = Path(__file__).resolve().parents[2]
 back_button_code_dir = project_root / "Back to main menu" / "Code"
 screen_arrows_code_dir = project_root / "Screen arrows" / "Code"
+witness_button_code_dir = project_root / "Witness shortcut" / "Code"
 
 if str(back_button_code_dir) not in sys.path:
     sys.path.append(str(back_button_code_dir))
 if str(screen_arrows_code_dir) not in sys.path:
     sys.path.append(str(screen_arrows_code_dir))
+if str(witness_button_code_dir) in sys.path:
+    sys.path.remove(str(witness_button_code_dir))
+sys.path.insert(0, str(witness_button_code_dir))
+
+# Streamlit keeps imported modules alive between reruns. Force this helper to
+# reload from the shared Witness shortcut folder after it was moved there.
+sys.modules.pop("witness_button", None)
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 from screen_arrows import screen_arrow_css, make_screen_arrow_button
+from witness_button import (
+    get_witness_file_button_css,
+    get_witness_file_button_html,
+    get_witness_green_button_css,
+    get_witness_overview_button_css,
+    get_witness_overview_button_html,
+    get_witness_red_button_css,
+    get_witness_red_button_html,
+    get_witness_static_button_html,
+    render_witness_file_button_streamlit,
+    render_witness_overview_button_streamlit,
+    render_witness_red_button_streamlit,
+)
+from witness_overview import PERSONS, get_witness_statement
 
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
-
-"""
-Tænker at vores SQL skal kunne oprette en "witnesses" tabel med følgende kolonner:
-CREATE TABLE witnesses (
-    id          SERIAL PRIMARY KEY,
-    full_name   TEXT,
-    occupation  TEXT,
-    age         TEXT,
-    date_of_birth TEXT,
-    personal_characteristics TEXT,
-    clothing    TEXT,
-    distinguishing_features  TEXT,
-    relationship_to_case     TEXT,
-    alibi       TEXT,
-    witness_statement        TEXT,
-    photo_path  TEXT   -- optional: sti til billede
-);
-"""
+CHARS_DIR = project_root / "Characters"
 
 
-WITNESSES = [
-    {
-        "full_name": "",
-        "occupation": "",
-        "age": "",
-        "date_of_birth": "",
-        "personal_characteristics": "",
-        "clothing": "",
-        "distinguishing_features": "",
-        "relationship_to_case": "",
-        "alibi": "",
-        "witness_statement": "",
-        "photo": None,
-    },
-]
+# Same birth details as suspects.py, so Witness File and Suspect File line up.
+PERSON_BIRTH_DETAILS = {
+    1: {"age": "34", "date_of_birth": "14/02/1992"},
+    2: {"age": "29", "date_of_birth": "03/08/1996"},
+    3: {"age": "31", "date_of_birth": "19/11/1994"},
+    4: {"age": "42", "date_of_birth": "27/04/1984"},
+    5: {"age": "38", "date_of_birth": "09/06/1987"},
+    6: {"age": "35", "date_of_birth": "22/01/1991"},
+    7: {"age": "24", "date_of_birth": "16/09/2001"},
+    8: {"age": "27", "date_of_birth": "30/03/1999"},
+    9: {"age": "33", "date_of_birth": "05/12/1992"},
+    10: {"age": "40", "date_of_birth": "11/07/1985"},
+    11: {"age": "32", "date_of_birth": "25/10/1993"},
+    12: {"age": "36", "date_of_birth": "08/05/1990"},
+    13: {"age": "58", "date_of_birth": "17/01/1968"},
+    14: {"age": "45", "date_of_birth": "29/09/1980"},
+    15: {"age": "30", "date_of_birth": "06/06/1995"},
+    16: {"age": "28", "date_of_birth": "13/04/1998"},
+    17: {"age": "61", "date_of_birth": "02/12/1964"},
+    18: {"age": "26", "date_of_birth": "21/07/1999"},
+    19: {"age": "39", "date_of_birth": "18/02/1987"},
+    20: {"age": "33", "date_of_birth": "12/10/1992"},
+    21: {"age": "41", "date_of_birth": "04/03/1985"},
+    22: {"age": "67", "date_of_birth": "26/08/1958"},
+    23: {"age": "23", "date_of_birth": "15/05/2003"},
+    24: {"age": "37", "date_of_birth": "01/11/1988"},
+    25: {"age": "72", "date_of_birth": "20/04/1954"},
+    26: {"age": "25", "date_of_birth": "07/01/2001"},
+    27: {"age": "29", "date_of_birth": "24/06/1996"},
+    28: {"age": "44", "date_of_birth": "10/09/1981"},
+    29: {"age": "31", "date_of_birth": "28/12/1994"},
+    30: {"age": "46", "date_of_birth": "05/02/1980"},
+}
+
+
+def _character_photo_path(person_id: int) -> str | None:
+    # Use the same image as suspects.py. No Char_zoom_ version here.
+    standard_path = CHARS_DIR / f"Char_{person_id}.png"
+
+    if standard_path.exists():
+        return str(standard_path)
+    return None
+
+
+def _short_text(text: str, limit: int = 170) -> str:
+    text = " ".join(str(text).split())
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3].rstrip() + "..."
+
+
+def _line_count(
+    text: str,
+    *,
+    chars_per_line: int = 58,
+    max_lines: int = 3,
+) -> int:
+    text = " ".join(str(text).split())
+    if not text:
+        return 1
+    return max(1, min(max_lines, (len(text) + chars_per_line - 1) // chars_per_line))
+
+
+def _field_html(
+    label: str,
+    value: str,
+    *,
+    tall: bool = False,
+    single: bool = False,
+    chars_per_line: int = 58,
+    max_lines: int = 3,
+    extra_class: str = "",
+) -> str:
+    safe_label = html.escape(label)
+    safe_value = html.escape(str(value))
+    lines = _line_count(
+        str(value),
+        chars_per_line=chars_per_line,
+        max_lines=max_lines,
+    ) if tall else 1
+    entry_class = "sf-entry sf-entry-tall" if tall and lines > 1 else "sf-entry"
+    if extra_class:
+        entry_class = f"{entry_class} {extra_class}"
+    value_class = "sf-single" if single else "sf-wrap"
+    line_style = f' style="--lines:{lines};"' if tall and lines > 1 else ""
+
+    return f"""
+                    <div class="{entry_class}"{line_style}>
+                        <div class="sf-label">{safe_label}</div>
+                        <div class="sf-line"><div class="sf-field {value_class}">{safe_value}</div></div>
+                    </div>
+    """
+
+
+def _split_field_html(
+    left_label: str,
+    left_value: str,
+    right_label: str,
+    right_value: str,
+    *,
+    extra_class: str = "",
+) -> str:
+    entry_class = "sf-entry-split"
+    if extra_class:
+        entry_class = f"{entry_class} {extra_class}"
+
+    return f"""
+                    <div class="{entry_class}">
+                        <div class="sf-subentry">
+                            <div class="sf-label">{html.escape(left_label)}</div>
+                            <div class="sf-line"><div class="sf-field sf-single">{html.escape(str(left_value))}</div></div>
+                        </div>
+                        <div class="sf-subentry">
+                            <div class="sf-label">{html.escape(right_label)}</div>
+                            <div class="sf-line"><div class="sf-field sf-single">{html.escape(str(right_value))}</div></div>
+                        </div>
+                    </div>
+    """
+
+
+def _witness_fields_html(witness: dict) -> str:
+    return "".join(
+        [
+            _field_html(
+                "Full Name:",
+                witness["full_name"],
+                single=True,
+                extra_class="wf-full-name-entry",
+            ),
+            _field_html(
+                "Occupation:",
+                witness["occupation"],
+                single=True,
+                extra_class="wf-occupation-entry",
+            ),
+            _split_field_html(
+                "Age:",
+                witness["age"],
+                "Date of Birth:",
+                witness["date_of_birth"],
+                extra_class="wf-age-date-entry",
+            ),
+            _field_html(
+                "Personal Characteristics:",
+                witness["personal_characteristics"],
+                tall=True,
+                chars_per_line=88,
+                extra_class="wf-personal-characteristics-entry",
+            ),
+            _field_html(
+                "Clothing:",
+                witness["clothing"],
+                tall=True,
+                chars_per_line=88,
+                extra_class="wf-clothing-entry",
+            ),
+            _field_html(
+                "Distinguishing Features:",
+                witness["distinguishing_features"],
+                tall=True,
+                chars_per_line=88,
+                extra_class="wf-distinguishing-features-entry",
+            ),
+            _field_html(
+                "Relationship to Case:",
+                witness["relationship_to_case"],
+                single=True,
+                extra_class="wf-relationship-entry",
+            ),
+            _field_html(
+                "Alibi:",
+                witness["alibi"],
+                single=True,
+                extra_class="wf-alibi-entry",
+            ),
+            _field_html(
+                "Witness Statement:",
+                witness["witness_statement"],
+                tall=True,
+                chars_per_line=82,
+                max_lines=4,
+                extra_class="wf-statement-entry",
+            ),
+        ]
+    )
+
+
+def _person_to_witness(person: dict) -> dict:
+    person_id = person.get("id", 0)
+    birth_details = PERSON_BIRTH_DETAILS.get(
+        person_id,
+        {"age": "", "date_of_birth": ""},
+    )
+    role = person.get("role", "")
+    arrived = person.get("arrived", "")
+    left = person.get("left", "")
+    appearance = (
+        f"{person.get('gender', '')}; "
+        f"{person.get('hair', '')} hair; "
+        f"{person.get('eyes', '')} eyes; "
+        f"{person.get('skin', '')} skin"
+    )
+
+    return {
+        "full_name": person.get("name", ""),
+        "occupation": role,
+        "age": birth_details["age"],
+        "date_of_birth": birth_details["date_of_birth"],
+        "personal_characteristics": appearance,
+        "clothing": person.get("clothing", ""),
+        "distinguishing_features": (
+            f"{person.get('hair', '')} hair, "
+            f"{person.get('eyes', '')} eyes, "
+            f"{person.get('skin', '')} skin"
+        ),
+        "relationship_to_case": f"{role}; present near case timeline",
+        "alibi": f"Registered presence: {arrived} - {left}",
+        "witness_statement": _short_text(get_witness_statement(person), 170),
+        "photo": _character_photo_path(person_id),
+    }
+
+
+def get_witnesses() -> list[dict]:
+    # Unlike Suspect File, this page always shows all characters.
+    return [_person_to_witness(person) for person in PERSONS]
 
 
 def image_to_base64(image_path: Path) -> str:
@@ -73,6 +289,36 @@ def find_background_image(assets_dir: Path) -> Path:
 def show_witnesses() -> None:
     back_btn_html = get_back_button_html(btn_key="wf_back")
     back_btn_css = get_back_button_css(left="1.2%", top="2.0%", width="13%")
+    witness_tab_html = get_witness_overview_button_html(btn_key="wf_tab_overview")
+    witness_tab_css = get_witness_overview_button_css(
+        css_class="witness-overview-tab",
+        left="82.7%",
+        top="27.7%",
+        selected=False,
+    )
+    witness_file_tab_html = get_witness_file_button_html(btn_key="wf_tab_file")
+    witness_file_tab_css = get_witness_file_button_css(
+        css_class="witness-file-tab",
+        left="82.9%",
+        top="46.8%",
+        selected=True,
+    )
+    witness_red_tab_html = get_witness_red_button_html(btn_key="wf_tab_suspects")
+    witness_red_tab_css = get_witness_red_button_css(
+        css_class="witness-red-tab",
+        left="82.9%",
+        top="11.6%",
+        selected=False,
+    )
+    witness_green_tab_html = get_witness_static_button_html(
+        css_class="witness-green-tab",
+        label="Witness shortcut green",
+    )
+    witness_green_tab_css = get_witness_green_button_css(
+        css_class="witness-green-tab",
+        left="82.9%",
+        top="65.8%",
+    )
 
     feature_dir = Path(__file__).resolve().parents[1]
     assets_dir = feature_dir / "Assets"
@@ -89,13 +335,14 @@ def show_witnesses() -> None:
         img_width, img_height = img.size
     aspect_ratio = img_width / img_height
 
-    total_witnesses = len(WITNESSES)
+    witnesses = get_witnesses()
+    total_witnesses = len(witnesses)
 
     if "witness_index" not in st.session_state:
         st.session_state.witness_index = 0
 
     current_index = st.session_state.witness_index % max(total_witnesses, 1)
-    witness = WITNESSES[current_index]
+    witness = witnesses[current_index]
     counter_text = f"{current_index + 1} / {total_witnesses}"
 
     left_arrow_html = make_screen_arrow_button(
@@ -123,6 +370,8 @@ def show_witnesses() -> None:
                 alt="Witness photo"
             >
             """
+
+    witness_fields_html = _witness_fields_html(witness)
 
     st.markdown(
         """
@@ -214,86 +463,238 @@ def show_witnesses() -> None:
             pointer-events: none;
         }}
 
-        /* Vidne-foto vises oven på siluet-pladsen på venstre side */
+        /* Same placement as suspects.py */
         .witness-photo {{
             position: absolute;
-            left: 6.5%;
-            top: 11%;
-            width: 34%;
-            height: 77%;
+            left: 19.9%;
+            top: 15%;
+            width: 25%;
+            height: 68%;
             object-fit: contain;
             z-index: 3;
             pointer-events: none;
         }}
 
-        /* Feltværdier oven på de stiplede linjer på højre side */
+        /* Same field layout as suspects.py */
         .witness-fields {{
             position: absolute;
-            left: 55.5%;
-            top: 10%;
-            width: 39%;
+            left: 52.0%;
+            top: 15.0%;
+            width: 27.5%;
+            height: 77.0%;
             z-index: 3;
-            display: flex;
-            flex-direction: column;
             font-family: 'Georgia', serif;
             color: #1a0e07;
+            box-sizing: border-box;
+            padding: 0.6% 0.8%;
         }}
 
-        .wf-row {{
-            display: flex;
-            align-items: baseline;
-            height: 8.2%;
+        .sf-entry {{
+            position: relative;
+            display: block;
+            min-height: 6.0%;
+            margin-bottom: 0.8%;
         }}
 
-        .wf-row-double {{
-            display: flex;
-            align-items: baseline;
-            height: 8.2%;
+        .sf-entry-tall {{
+            min-height: calc(1.35em + (var(--lines, 1) * 1.38em) + 0.35em);
         }}
 
-        .wf-row-tall {{
-            display: flex;
-            align-items: flex-start;
-            height: 14%;
+        .sf-entry-split {{
+            display: grid;
+            grid-template-columns: 1fr 1.3fr;
+            column-gap: 0.75em;
+            min-height: 6.0%;
+            margin-bottom: 0.8%;
         }}
 
-        .wf-value {{
-            font-size: clamp(9px, 0.9vw, 15px);
-            font-weight: 600;
+        .sf-subentry {{
+            display: block;
+        }}
+
+        .sf-label {{
+            display: block;
+            font-family: Arial, sans-serif;
+            font-size: clamp(6px, 0.58vw, 10px);
+            font-weight: 800;
+            color: #17202a;
+            padding-right: 0;
             white-space: nowrap;
+            margin-bottom: 0.05em;
+        }}
+
+        .sf-line {{
+            position: relative;
+            min-height: 1em;
+            border-bottom: 1.2px solid rgba(65, 85, 80, 0.58);
+            box-sizing: border-box;
+            width: 100%;
+            margin-top: 0.1em;
+        }}
+
+        .sf-entry-tall .sf-line {{
+            height: 100%;
+            min-height: calc(var(--lines, 1) * 1.38em);
+            background-image: linear-gradient(
+                to bottom,
+                transparent calc(1.38em - 1px),
+                rgba(65, 85, 80, 0.46) calc(1.38em - 1px),
+                rgba(65, 85, 80, 0.46) 1.38em,
+                transparent 1.38em
+            );
+            background-size: 100% 1.38em;
+            border-bottom: 1.2px solid rgba(65, 85, 80, 0.58);
+        }}
+
+        .sf-field {{
+            position: absolute;
+            left: 0.25em;
+            right: 0;
+            top: 0.64em;
+            font-weight: 600;
             overflow: hidden;
-            text-overflow: ellipsis;
-            flex: 1;
-            padding-left: 0.15em;
-        }}
-
-        .wf-value-age {{
-            font-size: clamp(9px, 0.9vw, 15px);
-            font-weight: 600;
-            white-space: nowrap;
-            width: 20%;
-            padding-left: 0.15em;
-        }}
-
-        .wf-value-dob {{
-            font-size: clamp(9px, 0.9vw, 15px);
-            font-weight: 600;
-            white-space: nowrap;
-            flex: 1;
-            padding-left: 0.15em;
-        }}
-
-        .wf-value-statement {{
-            font-size: clamp(8px, 0.8vw, 13px);
-            font-weight: 500;
-            white-space: pre-wrap;
+            color: #171008;
+            font-size: clamp(6px, 0.54vw, 9.5px);
+            line-height: 1.25em;
             word-break: break-word;
-            line-height: 1.55;
-            padding-left: 0.15em;
-            flex: 1;
+        }}
+
+        .sf-entry-tall .sf-field {{
+            top: 0.50em;
+            line-height: 1.38em;
+            max-height: calc(var(--lines, 1) * 1.38em);
+        }}
+
+        .sf-single {{
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }}
+
+        .sf-wrap {{
+            white-space: normal;
+        }}
+
+        /* Manual spacing hooks for every Witness File field. */
+        .wf-full-name-entry {{
+            margin-bottom: 0.8%;
+        }}
+
+        .wf-full-name-entry .sf-line {{
+            margin-top: 0.1em;
+        }}
+
+        .wf-full-name-entry .sf-field {{
+            top: 0.64em;
+        }}
+
+        .wf-occupation-entry {{
+            margin-bottom: 0.8%;
+        }}
+
+        .wf-occupation-entry .sf-line {{
+            margin-top: 0.1em;
+        }}
+
+        .wf-occupation-entry .sf-field {{
+            top: 0.64em;
+        }}
+
+        .wf-age-date-entry {{
+            margin-bottom: 0.8%;
+        }}
+
+        .wf-age-date-entry .sf-line {{
+            margin-top: 0.1em;
+        }}
+
+        .wf-age-date-entry .sf-field {{
+            top: 0.64em;
+        }}
+
+        .wf-personal-characteristics-entry {{
+            margin-bottom: 0.8%;
+        }}
+
+        .wf-personal-characteristics-entry .sf-line {{
+            margin-top: 0.1em;
+        }}
+
+        .wf-personal-characteristics-entry .sf-field {{
+            top: 0.50em;
+        }}
+
+        .wf-clothing-entry {{
+            margin-bottom: 1em;
+        }}
+
+        .wf-clothing-entry .sf-line {{
+            margin-top: 0.1em;
+        }}
+
+        .wf-clothing-entry .sf-field {{
+            top: 0.50em;
+        }}
+
+        .wf-distinguishing-features-entry {{
+            margin-bottom: 0.8%;
+        }}
+
+        .wf-distinguishing-features-entry .sf-line {{
+            margin-top: 0.1em;
+        }}
+
+        .wf-distinguishing-features-entry .sf-field {{
+            top: 0.50em;
+        }}
+
+        .wf-relationship-entry {{
+            margin-bottom: 0.8%;
+        }}
+
+        .wf-relationship-entry .sf-line {{
+            margin-top: 0.1em;
+        }}
+
+        .wf-relationship-entry .sf-field {{
+            top: 0.64em;
+        }}
+
+        .wf-alibi-entry {{
+            margin-bottom: 0.8%;
+        }}
+
+        .wf-alibi-entry .sf-line {{
+            margin-top: 0.1em;
+        }}
+
+        .wf-alibi-entry .sf-field {{
+            top: 0.64em;
+        }}
+
+        .wf-statement-entry {{
+            margin-bottom: 0.8%;
+        }}
+
+        .wf-statement-entry .sf-line {{
+            margin-top: -0.25em;
+            height: calc(var(--lines, 1) * 1.25em);
+            min-height: calc(var(--lines, 1) * 1.25em);
+        }}
+
+        .wf-statement-entry .sf-field {{
+            top: 1.35em;
+            line-height: 1.55em;
         }}
 
         {back_btn_css}
+
+        {witness_tab_css}
+
+        {witness_file_tab_css}
+
+        {witness_red_tab_css}
+
+        {witness_green_tab_css}
 
         {screen_arrow_css()}
 
@@ -340,35 +741,16 @@ def show_witnesses() -> None:
 
                 {photo_html}
 
+                {witness_tab_html}
+
+                {witness_file_tab_html}
+
+                {witness_red_tab_html}
+
+                {witness_green_tab_html}
+
                 <div class="witness-fields">
-                    <div class="wf-row">
-                        <span class="wf-value">{witness['full_name']}</span>
-                    </div>
-                    <div class="wf-row">
-                        <span class="wf-value">{witness['occupation']}</span>
-                    </div>
-                    <div class="wf-row-double">
-                        <span class="wf-value-age">{witness['age']}</span>
-                        <span class="wf-value-dob">{witness['date_of_birth']}</span>
-                    </div>
-                    <div class="wf-row-tall">
-                        <span class="wf-value-statement">{witness['personal_characteristics']}</span>
-                    </div>
-                    <div class="wf-row-tall">
-                        <span class="wf-value-statement">{witness['clothing']}</span>
-                    </div>
-                    <div class="wf-row-tall">
-                        <span class="wf-value-statement">{witness['distinguishing_features']}</span>
-                    </div>
-                    <div class="wf-row">
-                        <span class="wf-value">{witness['relationship_to_case']}</span>
-                    </div>
-                    <div class="wf-row">
-                        <span class="wf-value">{witness['alibi']}</span>
-                    </div>
-                    <div class="wf-row-tall">
-                        <span class="wf-value-statement">{witness['witness_statement']}</span>
-                    </div>
+                    {witness_fields_html}
                 </div>
 
                 {left_arrow_html}
@@ -397,6 +779,9 @@ def show_witnesses() -> None:
     components.html(html, height=1, scrolling=False)
 
     render_back_button_streamlit(btn_key="wf_back", target_page="main_menu")
+    render_witness_overview_button_streamlit(btn_key="wf_tab_overview", target_page="witnesses")
+    render_witness_file_button_streamlit(btn_key="wf_tab_file", target_page="witness_file")
+    render_witness_red_button_streamlit(btn_key="wf_tab_suspects", target_page="suspects")
 
     col_prev, col_next = st.columns(2)
     with col_prev:

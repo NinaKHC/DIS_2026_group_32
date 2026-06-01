@@ -65,6 +65,14 @@ PAGE_CONFIGS: dict[str, PageConfig] = {
         key="witnesses",
         title="Witnesses",
         folder_names=("Witness file", "Witness File", "Witnesses", "witnesses"),
+        module_names=("witness_overview.py", "witness_file.py", "witnesses.py"),
+        function_names=("show_witness_overview", "show_witnesses", "show_witness_file"),
+    ),
+
+    "witness_file": PageConfig(
+        key="witness_file",
+        title="Witness File",
+        folder_names=("Witness file", "Witness File", "Witnesses", "witnesses"),
         module_names=("witness_file.py", "witnesses.py"),
         function_names=("show_witnesses", "show_witness_file"),
     ),

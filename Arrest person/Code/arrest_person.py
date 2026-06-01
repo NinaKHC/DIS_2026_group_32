@@ -9,9 +9,15 @@ import streamlit.components.v1 as components
 
 project_root = Path(__file__).resolve().parents[2]
 back_button_code_dir = project_root / "Back to main menu" / "Code"
+char_randomizer_code_dir = project_root / "Char Randomizer" / "Code"
+suspect_selecter_code_dir = project_root / "Suspect selecter" / "Code"
 
 if str(back_button_code_dir) not in sys.path:
     sys.path.append(str(back_button_code_dir))
+if str(char_randomizer_code_dir) not in sys.path:
+    sys.path.append(str(char_randomizer_code_dir))
+if str(suspect_selecter_code_dir) not in sys.path:
+    sys.path.append(str(suspect_selecter_code_dir))
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 
@@ -20,11 +26,28 @@ try:
     suspects_dir = project_root / "Suspects" / "Code"
     if str(suspects_dir) not in sys.path:
         sys.path.append(str(suspects_dir))
-    from suspects import SUSPECTS
+    from suspects import SUSPECTS, _person_to_suspect
 except Exception:
     SUSPECTS = []
+    _person_to_suspect = None
+
+try:
+    from Random_char_selector import get_selected_characters
+except ImportError:
+    def get_selected_characters() -> list[dict]:
+        return []
+
+try:
+    from Is_Suspect import get_guilty_suspect, is_guilty_suspect
+except ImportError:
+    def get_guilty_suspect() -> dict | None:
+        return None
+
+    def is_guilty_suspect(character: dict) -> bool:
+        return bool(character.get("is_suspect"))
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
+CHARS_DIR = project_root / "Characters"
 
 # Sæt dette til den skyldiges full_name for at aktivere rigtigt/forkert feedback.
 # Lad feltet være tomt ("") for at springe over.
@@ -56,6 +79,95 @@ def _aspect(path: Path) -> float:
     with Image.open(path) as img:
         w, h = img.size
     return w / h
+
+
+def _get_arrest_candidates() -> list[dict]:
+    selected_characters = get_selected_characters()
+    suspicious_ids = set(st.session_state.get("wo_suspicious", set()))
+
+    if selected_characters and _person_to_suspect is not None:
+        candidates = selected_characters
+        if suspicious_ids:
+            candidates = [
+                character
+                for character in selected_characters
+                if character.get("id") in suspicious_ids
+            ]
+        return [_make_arrest_candidate(character) for character in candidates]
+
+    candidates = SUSPECTS
+    if suspicious_ids:
+        candidates = [
+            suspect
+            for suspect in SUSPECTS
+            if suspect.get("id") in suspicious_ids
+        ]
+    return [_make_arrest_candidate(suspect) for suspect in candidates]
+
+
+def _arrest_photo_path(person_id: int | None, fallback: str | None = None) -> str | None:
+    if person_id is not None:
+        zoom_path = CHARS_DIR / f"Char_zoom_{person_id}.png"
+        standard_path = CHARS_DIR / f"Char_{person_id}.png"
+        if zoom_path.exists():
+            return str(zoom_path)
+        if standard_path.exists():
+            return str(standard_path)
+    return fallback
+
+
+def _make_arrest_candidate(character: dict) -> dict:
+    if _person_to_suspect is not None and "full_name" not in character:
+        candidate = _person_to_suspect(character)
+    else:
+        candidate = dict(character)
+
+    person_id = candidate.get("id") or character.get("id")
+    candidate["photo"] = _arrest_photo_path(person_id, candidate.get("photo"))
+    return candidate
+
+
+def _is_correct_arrest(arrested: dict) -> bool:
+    guilty = get_guilty_suspect()
+    if guilty:
+        arrested_id = arrested.get("id")
+        guilty_id = guilty.get("id")
+        if arrested_id is not None and guilty_id is not None:
+            return arrested_id == guilty_id
+        return arrested.get("full_name") == guilty.get("name")
+
+    if CORRECT_SUSPECT:
+        return arrested.get("full_name") == CORRECT_SUSPECT
+
+    return bool(arrested.get("is_suspect"))
+
+
+def _get_guilty_result(candidates: list[dict], arrested: dict) -> tuple[str, str | None]:
+    guilty = get_guilty_suspect()
+    if guilty:
+        guilty_id = guilty.get("id")
+        matching_candidate = next(
+            (
+                candidate
+                for candidate in candidates
+                if guilty_id is not None and candidate.get("id") == guilty_id
+            ),
+            None,
+        )
+        if matching_candidate:
+            return matching_candidate.get("full_name", ""), matching_candidate.get("photo")
+        return guilty.get("name", ""), _arrest_photo_path(guilty_id, guilty.get("photo"))
+
+    if CORRECT_SUSPECT:
+        matching_candidate = next(
+            (candidate for candidate in candidates if candidate.get("full_name") == CORRECT_SUSPECT),
+            None,
+        )
+        if matching_candidate:
+            return matching_candidate.get("full_name", ""), matching_candidate.get("photo")
+        return CORRECT_SUSPECT, None
+
+    return arrested.get("full_name", ""), arrested.get("photo")
 
 
 def _card_html(suspect: dict | None, cfg: dict) -> str:
@@ -119,6 +231,7 @@ def _navigate_js() -> str:
 
 
 def _render_select(
+    suspects: list[dict],
     bg_b64: str,
     aspect: float,
     view_start: int,
@@ -126,9 +239,9 @@ def _render_select(
     back_btn_html: str,
     back_btn_css: str,
 ) -> None:
-    total = len(SUSPECTS)
-    left_suspect  = SUSPECTS[view_start]         if view_start     < total else None
-    right_suspect = SUSPECTS[view_start + 1]     if view_start + 1 < total else None
+    total = len(suspects)
+    left_suspect  = suspects[view_start]         if view_start     < total else None
+    right_suspect = suspects[view_start + 1]     if view_start + 1 < total else None
 
     left_html  = _card_html(left_suspect,  _LEFT)
     right_html = _card_html(right_suspect, _RIGHT)
@@ -144,7 +257,17 @@ def _render_select(
     hide_right_arrow = "ar-arrow-disabled" if view_start >= total - 1    else ""
 
     confirm_active = "ar-confirm-active" if selected_index >= 0 else "ar-confirm-inactive"
-    selected_name  = SUSPECTS[selected_index].get("full_name", "") if 0 <= selected_index < total else ""
+    selected_name  = suspects[selected_index].get("full_name", "") if 0 <= selected_index < total else ""
+    right_card_zone = ""
+    if right_suspect:
+        right_index = view_start + 1
+        right_card_zone = (
+            f'<div class="ar-card-zone {right_selected}" '
+            f'style="left:{_RIGHT["click_x"]}%;top:{_RIGHT["click_y"]}%;'
+            f'width:{_RIGHT["click_w"]}%;height:{_RIGHT["click_h"]}%;" '
+            f"""onclick="navigate('ar_select_{right_index}')" """
+            f'role="button" aria-label="Vælg {right_name}"></div>'
+        )
 
     html = f"""
     <!DOCTYPE html><html><head>
@@ -220,11 +343,7 @@ def _render_select(
                  onclick="navigate('ar_select_{view_start}')"
                  role="button" aria-label="Vælg {left_name}"></div>
 
-            {'<div class="ar-card-zone ' + right_selected + '"'
-              + f' style="left:{_RIGHT["click_x"]}%;top:{_RIGHT["click_y"]}%;width:{_RIGHT["click_w"]}%;height:{_RIGHT["click_h"]}%;"'
-              + f' onclick="navigate(\'ar_select_{view_start + 1}\')"'
-              + f' role="button" aria-label="Vælg {right_name}"></div>'
-              if right_suspect else ""}
+            {right_card_zone}
 
             <!-- Left arrow click zone -->
             <div class="ar-arrow-zone {hide_left_arrow}"
@@ -291,12 +410,13 @@ def show_arrest_suspect() -> None:
     bg_b64 = _b64(bg_path)
     aspect  = _aspect(bg_path)
 
-    if not SUSPECTS:
+    suspects = _get_arrest_candidates()
+    if not suspects:
         st.markdown(_streamlit_css(), unsafe_allow_html=True)
         st.error("Ingen mistænkte er tilføjet endnu. Udfyld SUSPECTS i Suspects/Code/suspects.py.")
         return
 
-    total = len(SUSPECTS)
+    total = len(suspects)
 
     if "ar_view"     not in st.session_state: st.session_state.ar_view     = 0
     if "ar_selected" not in st.session_state: st.session_state.ar_selected = -1
@@ -304,12 +424,15 @@ def show_arrest_suspect() -> None:
     view_start = max(0, min(st.session_state.ar_view, total - 1))
     st.session_state.ar_view = view_start
     selected = st.session_state.ar_selected
+    if selected >= total:
+        selected = -1
+        st.session_state.ar_selected = -1
 
     back_btn_html = get_back_button_html(btn_key="ar_back")
     back_btn_css  = get_back_button_css(left="1.0%", top="1.5%", width="10%")
 
     st.markdown(_streamlit_css(), unsafe_allow_html=True)
-    _render_select(bg_b64, aspect, view_start, selected, back_btn_html, back_btn_css)
+    _render_select(suspects, bg_b64, aspect, view_start, selected, back_btn_html, back_btn_css)
 
     # ── Skjulte Streamlit-navigationknapper ──────────────────────────────────
 
@@ -324,23 +447,16 @@ def show_arrest_suspect() -> None:
         st.rerun()
 
     if st.button("ar_confirm", key="ar_hidden_confirm"):
-        arrested = SUSPECTS[selected] if 0 <= selected < total else {}
+        arrested = suspects[selected] if 0 <= selected < total else {}
         arrested_name = arrested.get("full_name", "")
 
-        if CORRECT_SUSPECT:
-            is_correct = (arrested_name == CORRECT_SUSPECT)
-            guilty_name = CORRECT_SUSPECT
-            guilty_photo = next(
-                (s.get("photo") for s in SUSPECTS if s.get("full_name") == CORRECT_SUSPECT),
-                None,
-            )
-        else:
-            # Intet svar-nøgle sat — vis altid YouWin med den anholdte person
-            is_correct = True
-            guilty_name  = arrested_name
-            guilty_photo = arrested.get("photo", None)
+        is_correct = _is_correct_arrest(arrested)
+        guilty_name, guilty_photo = _get_guilty_result(suspects, arrested)
 
-        st.session_state["result_guilty_name"]  = guilty_name
+        st.session_state["result_is_correct"] = is_correct
+        st.session_state["result_arrested_name"] = arrested_name
+        st.session_state["result_arrested_photo"] = arrested.get("photo", None)
+        st.session_state["result_guilty_name"] = guilty_name
         st.session_state["result_guilty_photo"] = guilty_photo
         st.session_state["page"] = "you_win" if is_correct else "you_lose"
         st.rerun()
@@ -356,3 +472,4 @@ def show_arrest_suspect() -> None:
 
 def show_arrest_person() -> None:
     show_arrest_suspect()
+
