@@ -7,9 +7,6 @@ from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
 
-from sqlalchemy import text
-
-
 project_root = Path(__file__).resolve().parents[2]
 back_button_code_dir = project_root / "Back to main menu" / "Code"
 screen_arrows_code_dir = project_root / "Screen arrows" / "Code"
@@ -242,10 +239,6 @@ def get_witnesses() -> list[dict]:
     # Unlike Suspect File, this page always shows all characters.
     return [_person_to_witness(person) for person in PERSONS]
 
-for i in range(num_witnesses):
-    WITNESSES[id[i][0] - 1]["full_name"] = names[i][0]
-    WITNESSES[id[i][0] - 1]["occupation"] = occupation[i][0]
-    WITNESSES[id[i][0] - 1]["clothing"] = clothing[i][0]
 
 def image_to_base64(image_path: Path) -> str:
     with open(image_path, "rb") as image_file:
