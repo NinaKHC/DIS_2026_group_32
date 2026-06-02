@@ -6,14 +6,6 @@ DROP TABLE IF EXISTS Item_stolen;
 DROP TABLE IF EXISTS Presence;
 DROP TABLE IF EXISTS Person;
 
-CREATE TABLE Alibi (
-    person_id INTEGER PRIMARY KEY,
-    formatted_alibi VARCHAR(700),
-
-    FOREIGN KEY (person_id)
-        REFERENCES Person(person_id)
-);
-
 CREATE TABLE Person (
     person_id INTEGER PRIMARY KEY,
     name VARCHAR(50),
@@ -24,6 +16,14 @@ CREATE TABLE Person (
     clothing VARCHAR(200),
     role VARCHAR(50),
     is_suspect BOOLEAN
+);
+
+CREATE TABLE Alibi (
+    person_id INTEGER PRIMARY KEY,
+    formatted_alibi VARCHAR(700),
+
+    FOREIGN KEY (person_id)
+        REFERENCES Person(person_id)
 );
 
 CREATE TABLE Presence (
