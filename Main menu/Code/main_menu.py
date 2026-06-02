@@ -8,6 +8,67 @@ import streamlit.components.v1 as components
 
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
 
+BACKGROUND_IMAGE_NAME = "Case Overview.png"
+
+MENU_BUTTONS = [
+    {
+        "button_text": "mm_case_overview",
+        "page": "case_overview",
+        "label": "Case Overview",
+        "image": "Case_overview.png",
+        "css_class": "btn-case-overview",
+    },
+    {
+        "button_text": "mm_crime_scene",
+        "page": "crime_scene",
+        "label": "Crime Scene",
+        "image": "Crime_scene.png",
+        "css_class": "btn-crime-scene",
+    },
+    {
+        "button_text": "mm_witnesses",
+        "page": "witnesses",
+        "label": "Witness",
+        "image": "Witness.png",
+        "css_class": "btn-witnesses",
+    },
+    {
+        "button_text": "mm_suspects",
+        "page": "suspects",
+        "label": "Suspects",
+        "image": "Suspects.png",
+        "css_class": "btn-suspects",
+    },
+    {
+        "button_text": "mm_stolen_items",
+        "page": "stolen_items",
+        "label": "Stolen Items",
+        "image": "Stolen_items.png",
+        "css_class": "btn-stolen-items",
+    },
+    {
+        "button_text": "mm_locations",
+        "page": "locations",
+        "label": "Map",
+        "image": "Map.png",
+        "css_class": "btn-locations",
+    },
+    {
+        "button_text": "mm_access_logs",
+        "page": "access_logs",
+        "label": "Access Logs",
+        "image": "Access_logs.png",
+        "css_class": "btn-access-logs",
+    },
+    {
+        "button_text": "mm_replay_intro",
+        "page": "intro",
+        "label": "Replay Intro",
+        "image": "Replay_intro.png",
+        "css_class": "btn-replay-intro",
+    },
+]
+
 
 def image_to_base64(image_path: Path) -> str:
     with open(image_path, "rb") as image_file:
@@ -21,17 +82,48 @@ def find_first_image(assets_dir: Path) -> Path:
     raise FileNotFoundError(f"No image file found in: {assets_dir}")
 
 
+def find_background_image(assets_dir: Path) -> Path:
+    background_path = assets_dir / BACKGROUND_IMAGE_NAME
+    if background_path.exists():
+        return background_path
+    return find_first_image(assets_dir)
+
+
+def build_menu_buttons_html(assets_dir: Path) -> str:
+    buttons_html = []
+
+    for button in MENU_BUTTONS:
+        image_path = assets_dir / button["image"]
+        if not image_path.exists():
+            continue
+
+        image_b64 = image_to_base64(image_path)
+        buttons_html.append(
+            f"""
+            <button
+                class="menu-image-button {button['css_class']}"
+                onclick="navigate('{button['button_text']}')"
+                aria-label="{button['label']}">
+                <img src="data:image/png;base64,{image_b64}" alt="{button['label']}">
+            </button>
+            """
+        )
+
+    return "\n".join(buttons_html)
+
+
 def show_main_menu() -> None:
     feature_dir = Path(__file__).resolve().parents[1]
     assets_dir = feature_dir / "Assets"
 
     try:
-        background_path = find_first_image(assets_dir)
+        background_path = find_background_image(assets_dir)
     except FileNotFoundError as error:
         st.error(str(error))
         st.stop()
 
     background_b64 = image_to_base64(background_path)
+    menu_buttons_html = build_menu_buttons_html(assets_dir)
 
     with Image.open(background_path) as img:
         image_width, image_height = img.size
@@ -121,59 +213,57 @@ def show_main_menu() -> None:
             background-repeat: no-repeat;
         }}
 
+        .menu-image-button {{
+            position: absolute;
+            background: transparent;
+            border: 0;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+            z-index: 4;
+            filter: drop-shadow(0 1.2vh 1.2vh rgba(0, 0, 0, 0.34));
+            transition: transform 0.16s ease, filter 0.16s ease;
+        }}
+
+        .menu-image-button:hover {{
+            transform: translateY(-0.8%) scale(1.035);
+            filter: drop-shadow(0 1.5vh 1.4vh rgba(0, 0, 0, 0.42)) brightness(1.06);
+        }}
+
+        .menu-image-button img {{
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            user-select: none;
+            pointer-events: none;
+        }}
+
+        .btn-case-overview {{ left: 18.5%; top: 35.5%; width: 15.5%; height: 27.5%; }}
+        .btn-crime-scene   {{ left: 38.8%; top: 35.8%; width: 14.0%; height: 24.9%; }}
+        .btn-witnesses     {{ left: 28.0%; top: 7.8%; width: 14.0%; height: 24.9%; }}
+        .btn-suspects      {{ left: 45.2%; top: 7.8%; width: 14.0%; height: 24.9%; }}
+        .btn-stolen-items  {{ left: 28.5%; top: 60.0%; width: 17.5%; height: 25.5%; }}
+        .btn-locations     {{ left: 45.0%; top: 70.0%; width: 17.5%; height: 25.5%; }}
+        .btn-access-logs   {{ left: 53.3%; top: 41.0%; width: 12.4%; height: 31.0%; }}
+        .btn-replay-intro  {{ left: 60.0%; top: 10.0%; width: 15.5%; height: 23.0%; }}
+
         .case-click-zone {{
             position: absolute;
             display: block;
             background: transparent;
             cursor: pointer;
-            border-radius: 12px;
+            z-index: 5;
         }}
 
-        .case-click-zone::after {{
-            content: "";
-            position: absolute;
-            inset: 0;
-            border: 3px solid rgba(255, 210, 122, 0.65);
-            background: rgba(255, 210, 122, 0.10);
-            border-radius: 14px;
-            opacity: 0;
-            transition: opacity 0.15s ease;
-            pointer-events: none;
-        }}
-
-        .case-click-zone:hover::after {{
-            opacity: 1;
-        }}
-
-        .zone-case-overview     {{ left: 26.0%; top:  6.3%; width: 10.0%; height: 26.6%; }}
-        .zone-crime-scene       {{ left: 39.2%; top:  5.4%; width:  9.9%; height: 25.8%; }}
-        .zone-witnesses         {{ left: 53.1%; top:  6.3%; width:  8.1%; height: 23.3%; }}
-        .zone-suspects          {{ left: 66.4%; top:  8.0%; width: 10.5%; height: 21.6%; }}
-        .zone-evidence          {{ left: 13.8%; top: 40.0%; width:  9.0%; height: 18.3%; }}
-        .zone-stolen-items      {{ left: 27.6%; top: 35.9%; width: 11.8%; height: 22.9%; }}
-        .zone-locations         {{ left: 44.2%; top: 35.3%; width: 15.6%; height: 21.5%; }}
-        .zone-timeline          {{ left: 64.0%; top: 35.9%; width:  9.9%; height: 22.9%; }}
-        .zone-surveillance-media{{ left: 15.1%; top: 65.5%; width: 13.1%; height: 15.6%; }}
-        .zone-access-logs       {{ left: 32.1%; top: 63.5%; width: 10.7%; height: 28.2%; }}
-        .zone-notes-connections  {{ left: 47.9%; top: 61.9%; width: 12.2%; height: 30.7%; }}
-        .zone-arrest-suspect    {{ left: 83.7%; top: 36.5%; width:  6.6%; height: 27.1%; }}
-        .zone-exit-main-menu    {{ left: 67.7%; top: 67.5%; width:  8.2%; height: 22.8%; }}
+        .zone-arrest-suspect {{ left: 81.2%; top: 43.0%; width: 13.5%; height: 19.0%; }}
+        .zone-exit-main-menu {{ left: 65.2%; top: 69.0%; width: 10.8%; height: 17.0%; }}
         </style>
     </head>
     <body>
         <div class="mm-page">
             <div class="menu-stage">
-                <div class="case-click-zone zone-case-overview"      onclick="navigate('mm_case_overview')"      role="button" aria-label="Case Overview"></div>
-                <div class="case-click-zone zone-crime-scene"        onclick="navigate('mm_crime_scene')"        role="button" aria-label="Crime Scene"></div>
-                <div class="case-click-zone zone-witnesses"          onclick="navigate('mm_witnesses')"          role="button" aria-label="Witnesses"></div>
-                <div class="case-click-zone zone-suspects"           onclick="navigate('mm_suspects')"           role="button" aria-label="Suspects"></div>
-                <div class="case-click-zone zone-evidence"           onclick="navigate('mm_evidence')"           role="button" aria-label="Evidence"></div>
-                <div class="case-click-zone zone-stolen-items"       onclick="navigate('mm_stolen_items')"       role="button" aria-label="Stolen Items"></div>
-                <div class="case-click-zone zone-locations"          onclick="navigate('mm_locations')"          role="button" aria-label="Locations"></div>
-                <div class="case-click-zone zone-timeline"           onclick="navigate('mm_timeline')"           role="button" aria-label="Timeline"></div>
-                <div class="case-click-zone zone-surveillance-media" onclick="navigate('mm_surveillance_media')" role="button" aria-label="Surveillance and Media"></div>
-                <div class="case-click-zone zone-access-logs"        onclick="navigate('mm_access_logs')"        role="button" aria-label="Access Logs"></div>
-                <div class="case-click-zone zone-notes-connections"  onclick="navigate('mm_notes_connections')"  role="button" aria-label="Notes and Connections"></div>
+                {menu_buttons_html}
                 <div class="case-click-zone zone-arrest-suspect"     onclick="navigate('mm_arrest_suspect')"     role="button" aria-label="Arrest the Suspect"></div>
                 <div class="case-click-zone zone-exit-main-menu"     onclick="navigate('mm_start_screen')"       role="button" aria-label="Exit to Start Screen"></div>
             </div>
@@ -196,26 +286,18 @@ def show_main_menu() -> None:
 
     components.html(html, height=1, scrolling=False)
 
-    destinations = [
-        ("mm_case_overview",      "case_overview"),
-        ("mm_crime_scene",        "crime_scene"),
-        ("mm_witnesses",          "witnesses"),
-        ("mm_suspects",           "suspects"),
-        ("mm_evidence",           "evidence"),
-        ("mm_stolen_items",       "stolen_items"),
-        ("mm_locations",          "locations"),
-        ("mm_timeline",           "timeline"),
-        ("mm_surveillance_media", "surveillance_media"),
-        ("mm_access_logs",        "access_logs"),
-        ("mm_notes_connections",  "notes_connections"),
-        ("mm_arrest_suspect",     "arrest_suspect"),
-        ("mm_start_screen",       "start_screen"),
-    ]
+    destinations = [(button["button_text"], button["page"]) for button in MENU_BUTTONS]
+    destinations.extend([
+        ("mm_arrest_suspect", "arrest_suspect"),
+        ("mm_start_screen", "start_screen"),
+    ])
 
     cols = st.columns(len(destinations))
     for col, (btn_text, page) in zip(cols, destinations):
         with col:
             if st.button(btn_text, key=f"mm_hidden_{btn_text}"):
+                if btn_text == "mm_replay_intro":
+                    st.session_state["intro_seen"] = True
                 st.session_state["page"] = page
                 st.rerun()
 
