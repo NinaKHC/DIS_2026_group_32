@@ -1,4 +1,5 @@
 import base64
+import html
 import math
 import os
 import sys
@@ -13,11 +14,14 @@ from sqlalchemy import create_engine, text
 project_root = Path(__file__).resolve().parents[2]
 back_button_code_dir = project_root / "Back to main menu" / "Code"
 screen_arrows_code_dir = project_root / "Screen arrows" / "Code"
+witness_file_code_dir = project_root / "Witness file" / "Code"
 
 if str(back_button_code_dir) not in sys.path:
     sys.path.append(str(back_button_code_dir))
 if str(screen_arrows_code_dir) not in sys.path:
     sys.path.append(str(screen_arrows_code_dir))
+if str(witness_file_code_dir) not in sys.path:
+    sys.path.append(str(witness_file_code_dir))
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 from screen_arrows import screen_arrow_css, make_screen_arrow_button
@@ -37,48 +41,69 @@ def fetch_presence_data() -> list[dict]:
     Returns a list of dictionaries with person name, arrival time, departure time, and work status.
     """
     try:
-        engine = create_engine(DATABASE_URL)
-        
-        with engine.connect() as connection:
-            query = text("""
-                SELECT 
-                    p.name,
-                    pr.arrived_at,
-                    pr.left_at,
-                    pr.was_working
-                FROM Presence pr
-                JOIN Person p ON pr.person_id = p.person_id
-                ORDER BY pr.arrived_at ASC
-            """)
-            
-            result = connection.execute(query)
-            rows = result.fetchall()
-            
-            st.write(f"Debug: Fetched {len(rows)} rows from database")
-            
-            access_log = []
-            for row in rows:
-                name, arrived_at, left_at, was_working = row
-                
-                # Extract time in HH:MM format
-                arrived_time = arrived_at.strftime("%H:%M") if arrived_at else ""
-                left_time = left_at.strftime("%H:%M") if left_at else ""
-                
-                # Convert was_working boolean to "Ja"/"Nej"
-                purchased = "Ja" if was_working else "Nej"
-                
-                access_log.append({
-                    "person": name,
-                    "arrived": arrived_time,
-                    "left": left_time,
-                    "purchased": purchased
-                })
-            
-            return access_log
-    
-    except Exception as e:
-        st.error(f"Failed to fetch presence data: {e}")
+        return fetch_presence_data_from_database()
+    except Exception:
+        return fetch_presence_data_from_local_persons()
+
+
+def fetch_presence_data_from_database() -> list[dict]:
+    engine = create_engine(DATABASE_URL)
+
+    with engine.connect() as connection:
+        query = text("""
+            SELECT
+                p.person_id,
+                p.name,
+                p.role,
+                pr.arrived_at,
+                pr.left_at,
+                pr.was_working
+            FROM Presence pr
+            JOIN Person p ON pr.person_id = p.person_id
+            ORDER BY pr.arrived_at ASC
+        """)
+
+        rows = connection.execute(query).fetchall()
+
+    access_log = []
+    for row in rows:
+        person_id, name, role, arrived_at, left_at, was_working = row
+        arrived_time = arrived_at.strftime("%H:%M") if arrived_at else ""
+        left_time = left_at.strftime("%H:%M") if left_at else ""
+
+        access_log.append({
+            "person_id": person_id,
+            "person": name,
+            "role": role,
+            "arrived": arrived_time,
+            "left": left_time,
+            "works_here": "Yes" if was_working else "No",
+        })
+
+    return access_log
+
+
+def fetch_presence_data_from_local_persons() -> list[dict]:
+    try:
+        from witness_overview import PERSONS
+    except ImportError:
         return []
+
+    def looks_like_employee(role: str) -> bool:
+        role_lower = role.lower()
+        return "employee" in role_lower or role_lower in {"investigator", "watchmaker"}
+
+    return [
+        {
+            "person_id": person.get("id", ""),
+            "person": person.get("name", ""),
+            "role": person.get("role", ""),
+            "arrived": person.get("arrived", ""),
+            "left": person.get("left", ""),
+            "works_here": "Yes" if looks_like_employee(person.get("role", "")) else "No",
+        }
+        for person in PERSONS
+    ]
 
 
 # ── Adgangslog ────────────────────────────────────────────────────────────────
@@ -87,15 +112,17 @@ ACCESS_LOG: list[dict] = []
 
 # ── Tabel-layout på billedet (i % af billedets bredde/højde) ─────────────────
 # Juster x-værdierne hvis teksten ikke lander på de korrekte kolonner.
-ROWS_PER_PAGE = 8
+ROWS_PER_PAGE = 10
 
 TABLE = {
-    "x_person":    19.5,   # venstre kant af "Person"-kolonnen
-    "x_arrived":   37.5,   # venstre kant af "Arrived"-kolonnen
-    "x_left":      50.0,   # venstre kant af "Left"-kolonnen
-    "x_purchased": 62.5,   # venstre kant af "Purchased?"-kolonnen
+    "x_person":    25.5,   # venstre kant af "Person"-kolonnen
+    "x_role":      39.5,   # venstre kant af "Role"-kolonnen
+    "x_arrived":   51.0,   # venstre kant af "Arrived"-kolonnen
+    "x_left":      59.0,   # venstre kant af "Left"-kolonnen
+    "x_working":   67.0,   # venstre kant af "Working"-kolonnen
+    "y_header":    32.2,   # top af kolonneoverskrifterne (%)
     "y_first":     36.5,   # top af første datarække (%)
-    "row_h":        8.3,   # højde pr. række (%)
+    "row_h":        4.3,   # højde pr. række (%)
 }
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -111,14 +138,40 @@ def get_aspect_ratio(image_path: Path) -> float:
     return w / h
 
 
+def _escape(value: object) -> str:
+    return html.escape(str(value or ""))
+
+
+def _build_header_html() -> str:
+    header_style = (
+        "position:absolute;"
+        "font-family:Georgia,serif;"
+        "font-size:clamp(8px,0.95vw,15px);"
+        "color:#1a0e07;"
+        "font-weight:900;"
+        "white-space:nowrap;"
+        "z-index:10;"
+        f"top:{TABLE['y_header']}%;"
+    )
+
+    return f"""
+    <span style="{header_style}left:{TABLE['x_person']}%;max-width:13%;">Person</span>
+    <span style="{header_style}left:{TABLE['x_role']}%;max-width:10%;">Role</span>
+    <span style="{header_style}left:{TABLE['x_arrived']}%;max-width:7%;">Arrived</span>
+    <span style="{header_style}left:{TABLE['x_left']}%;max-width:7%;">Left</span>
+    <span style="{header_style}left:{TABLE['x_working']}%;max-width:9%;">Working</span>
+    """
+
+
 def _build_rows_html(page_entries: list[dict]) -> str:
     html = ""
     for i, entry in enumerate(page_entries):
         y = TABLE["y_first"] + i * TABLE["row_h"]
-        person    = entry.get("person", "")
-        arrived   = entry.get("arrived", "")
-        left      = entry.get("left", "")
-        purchased = entry.get("purchased", "")
+        person = _escape(entry.get("person", ""))
+        role = _escape(entry.get("role", ""))
+        arrived = _escape(entry.get("arrived", ""))
+        left = _escape(entry.get("left", ""))
+        works_here = _escape(entry.get("works_here", entry.get("purchased", "")))
 
         cell_style = (
             "position:absolute;"
@@ -134,13 +187,13 @@ def _build_rows_html(page_entries: list[dict]) -> str:
         )
 
         html += f"""
-        <span style="{cell_style}left:{TABLE['x_person']}%;max-width:17%;">{person}</span>
-        <span style="{cell_style}left:{TABLE['x_arrived']}%;max-width:11%;">{arrived}</span>
-        <span style="{cell_style}left:{TABLE['x_left']}%;max-width:11%;">{left}</span>
-        <span style="{cell_style}left:{TABLE['x_purchased']}%;max-width:14%;">{purchased}</span>
+        <span style="{cell_style}left:{TABLE['x_person']}%;max-width:13%;">{person}</span>
+        <span style="{cell_style}left:{TABLE['x_role']}%;max-width:10%;">{role}</span>
+        <span style="{cell_style}left:{TABLE['x_arrived']}%;max-width:7%;">{arrived}</span>
+        <span style="{cell_style}left:{TABLE['x_left']}%;max-width:7%;">{left}</span>
+        <span style="{cell_style}left:{TABLE['x_working']}%;max-width:9%;">{works_here}</span>
         """
     
-    st.write(f"Debug: Built HTML for {len(page_entries)} entries")
     return html
 
 
@@ -169,8 +222,6 @@ def show_access_logs() -> None:
         ACCESS_LOG = fetch_presence_data()
     
     bg_path = ASSETS_DIR / "Access logs.png"
-    st.write(f"Debug: Looking for background at: {bg_path}")
-    st.write(f"Debug: Background exists: {bg_path.exists()}")
     if not bg_path.exists():
         st.error(f"Baggrundsbillede ikke fundet: {bg_path}")
         st.stop()
@@ -190,8 +241,7 @@ def show_access_logs() -> None:
     start = current_page * ROWS_PER_PAGE
     page_entries = ACCESS_LOG[start : start + ROWS_PER_PAGE]
     
-    st.write(f"Debug: Page entries: {page_entries[:1]}")  # Show first entry
-
+    header_html = _build_header_html()
     rows_html = _build_rows_html(page_entries)
 
     show_left  = current_page > 0
@@ -292,6 +342,7 @@ def show_access_logs() -> None:
             {back_btn_html}
             <div class="al-stage">
                 <img class="al-bg" src="data:image/png;base64,{bg_b64}" alt="Access Logs">
+                {header_html}
                 {rows_html}
                 {left_arrow}
                 {right_arrow}

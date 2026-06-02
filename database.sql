@@ -1,9 +1,18 @@
 -- database.sql
 
+DROP TABLE IF EXISTS Alibi;
 DROP TABLE IF EXISTS Statement;
 DROP TABLE IF EXISTS Item_stolen;
 DROP TABLE IF EXISTS Presence;
 DROP TABLE IF EXISTS Person;
+
+CREATE TABLE Alibi (
+    person_id INTEGER PRIMARY KEY,
+    formatted_alibi VARCHAR(700),
+
+    FOREIGN KEY (person_id)
+        REFERENCES Person(person_id)
+);
 
 CREATE TABLE Person (
     person_id INTEGER PRIMARY KEY,
@@ -61,7 +70,8 @@ INSERT INTO Person VALUES
  'green',
  'mediumbrown',
  'blue blazer, white blouse, grey trousers, brown shoes, gold jewelry',
- 'investigator',
+ 'investigator',
+
  34,
  '1992-02-14',
  FALSE
@@ -74,7 +84,8 @@ INSERT INTO Person VALUES
  'brown',
  'darkbrown',
  'green shirt, brown t-shirt, black apron, brown pants, black sneakers',
- 'cafe employee',
+ 'cafe employee',
+
  29,
  '1996-08-03',
  FALSE
@@ -87,7 +98,8 @@ INSERT INTO Person VALUES
  'darkbrown',
  'fair',
  'grey cardigan, yellow scarf, red trousers, glasses, brown shoes, staff lanyard',
- 'bookstore employee',
+ 'bookstore employee',
+
  31,
  '1994-11-19',
  FALSE
@@ -100,7 +112,8 @@ INSERT INTO Person VALUES
  'brown',
  'lightbrown',
  'striped shirt, brown apron, dark trousers, green beanie, brown boots',
- 'bakery employee',
+ 'bakery employee',
+
  42,
  '1984-04-27',
  FALSE
@@ -113,7 +126,8 @@ INSERT INTO Person VALUES
  'green',
  'olive',
  'white blouse, green apron, red skirt, brown boots',
- 'florist employee',
+ 'florist employee',
+
  38,
  '1987-06-09',
  FALSE
@@ -126,7 +140,8 @@ INSERT INTO Person VALUES
  'brown',
  'tan',
  'red shirt, black t-shirt, brown pants, brown bag, sneakers',
- 'witness',
+ 'witness',
+
  35,
  '1991-01-22',
  FALSE
@@ -139,7 +154,8 @@ INSERT INTO Person VALUES
  'blue',
  'fair',
  'grey beanie, blue vest, white sweater, black skirt, sneakers',
- 'customer',
+ 'customer',
+
  24,
  '2001-09-16',
  FALSE
@@ -152,7 +168,8 @@ INSERT INTO Person VALUES
  'hazel',
  'darkbrown',
  'orange jacket, black top, blue jeans, black boots',
- 'customer',
+ 'customer',
+
  27,
  '1999-03-30',
  FALSE
@@ -165,7 +182,8 @@ INSERT INTO Person VALUES
  'greygreen',
  'olive',
  'grey shirt, black top, brown pants, black sneakers',
- 'customer',
+ 'customer',
+
  33,
  '1992-12-05',
  FALSE
@@ -178,7 +196,8 @@ INSERT INTO Person VALUES
  'brown',
  'mediumbrown',
  'green jacket, white sweater, black pants, green sneakers',
- 'customer',
+ 'customer',
+
  40,
  '1985-07-11',
  FALSE
@@ -191,7 +210,8 @@ INSERT INTO Person VALUES
  'green',
  'fair',
  'blue beanie, green sweater, white shirt, grey pants, bag, sneakers',
- 'reporter',
+ 'reporter',
+
  32,
  '1993-10-25',
  FALSE
@@ -204,7 +224,8 @@ INSERT INTO Person VALUES
  'brown',
  'darkbrown',
  'yellow jacket, blue jumpsuit, brown bag, gold earrings, white sneakers',
- 'market employee',
+ 'market employee',
+
  36,
  '1990-05-08',
  FALSE
@@ -217,7 +238,8 @@ INSERT INTO Person VALUES
  'brown',
  'tan',
  'dark blue coat, white shirt, blue scarf, grey trousers, brown bag, brown boots',
- 'watchmaker',
+ 'watchmaker',
+
  58,
  '1968-01-17',
  FALSE
@@ -230,7 +252,8 @@ INSERT INTO Person VALUES
  'brown',
  'mediumbrown',
  'green coat, yellow shirt, red scarf, red pants, brown boots, gold jewelry',
- 'art dealer',
+ 'art dealer',
+
  45,
  '1980-09-29',
  FALSE
@@ -243,7 +266,8 @@ INSERT INTO Person VALUES
  'brown',
  'fair',
  'black leather jacket, red t-shirt, green jeans, chains, gloves, black boots',
- 'customer',
+ 'customer',
+
  30,
  '1995-06-06',
  FALSE
@@ -256,7 +280,8 @@ INSERT INTO Person VALUES
  'amberbrown',
  'mediumbrown',
  'blue dress, white cardigan, blue scarf, name tag, gold earrings, blue shoes',
- 'jewelry employee',
+ 'jewelry employee',
+
  28,
  '1998-04-13',
  FALSE
@@ -269,7 +294,8 @@ INSERT INTO Person VALUES
  'green',
  'fair',
  'white blouse, blue vest, blue long skirt, blue scarf, glasses, name tag, blue shoes',
- 'senior jewelry employee',
+ 'senior jewelry employee',
+
  61,
  '1964-12-02',
  FALSE
@@ -282,7 +308,8 @@ INSERT INTO Person VALUES
  'hazel',
  'olive',
  'blue suit, white turtleneck, name tag, gold necklace, blue shoes',
- 'jewelry employee',
+ 'jewelry employee',
+
  26,
  '1999-07-21',
  FALSE
@@ -295,7 +322,8 @@ INSERT INTO Person VALUES
  'brown',
  'darkbrown',
  'white shirt, blue vest, blue tie, blue trousers, name tag, brown shoes',
- 'jewelry employee',
+ 'jewelry employee',
+
  39,
  '1987-02-18',
  FALSE
@@ -308,7 +336,8 @@ INSERT INTO Person VALUES
  'brown',
  'fair',
  'blue blazer, white blouse, blue skirt, blue scarf, name tag, black shoes',
- 'jewelry employee',
+ 'jewelry employee',
+
  33,
  '1992-10-12',
  FALSE
@@ -321,7 +350,8 @@ INSERT INTO Person VALUES
  'hazel',
  'mediumbrown',
  'pink coat, blue blouse, white pants, gold earrings, bracelets, shoes',
- 'customer',
+ 'customer',
+
  41,
  '1985-03-04',
  FALSE
@@ -334,7 +364,8 @@ INSERT INTO Person VALUES
  'brown',
  'darkbrown',
  'blue blazer, white turtleneck, grey trousers, grey cap, glasses, cane, red shoes',
- 'collector',
+ 'collector',
+
  67,
  '1958-08-26',
  FALSE
@@ -347,7 +378,8 @@ INSERT INTO Person VALUES
  'brown',
  'fair',
  'red jacket, white t-shirt, blue skirt, black socks, white sneakers, black bag',
- 'customer',
+ 'customer',
+
  23,
  '2003-05-15',
  FALSE
@@ -360,7 +392,8 @@ INSERT INTO Person VALUES
  'brown',
  'tan',
  'orange vest, blue shirt, green pants, black watch, brown boots',
- 'delivery driver',
+ 'delivery driver',
+
  37,
  '1988-11-01',
  FALSE
@@ -373,7 +406,8 @@ INSERT INTO Person VALUES
  'brown',
  'fair',
  'purple cardigan, yellow blouse, green long skirt, pearl earrings, glasses, red shoes',
- 'customer',
+ 'customer',
+
  72,
  '1954-04-20',
  FALSE
@@ -386,7 +420,8 @@ INSERT INTO Person VALUES
  'blue',
  'fair',
  'blue blouse, black skirt, black tights, gold earrings, black shoes',
- 'customer',
+ 'customer',
+
  25,
  '2001-01-07',
  FALSE
@@ -399,7 +434,8 @@ INSERT INTO Person VALUES
  'green',
  'mediumbrown',
  'yellow shirt, black turtleneck, black trousers, black boots, watch, necklace',
- 'customer',
+ 'customer',
+
  29,
  '1996-06-24',
  FALSE
@@ -412,7 +448,8 @@ INSERT INTO Person VALUES
  'hazel',
  'olive',
  'brown coat, black turtleneck, dark trousers, black belt, black shoes',
- 'customer',
+ 'customer',
+
  44,
  '1981-09-10',
  FALSE
@@ -425,7 +462,8 @@ INSERT INTO Person VALUES
  'brown',
  'darkbrown',
  'red turtleneck, brown trousers, brown belt, gold necklace, brown boots',
- 'customer',
+ 'customer',
+
  31,
  '1994-12-28',
  FALSE
@@ -438,7 +476,8 @@ INSERT INTO Person VALUES
  'blue',
  'fair',
  'green jacket, white shirt, blue jeans, brown belt, brown shoes',
- 'customer',
+ 'customer',
+
  46,
  '1980-02-05',
  FALSE
@@ -767,6 +806,42 @@ INSERT INTO Statement VALUES
  'Before the alarm, I noticed someone with {{culprit_eye_color}} eyes looking closely at {{stolen_item}}.',
  TRUE
 );
+
+-- Person 1 - 10
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (1, 'Investigated the case on-site after the alarm. Statement: I arrived after the alarm, but one witness kept mentioning someone with {{culprit_hair_color}} hair. That detail may matter.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (2, 'Worked their coffee shift in the café during the incident. Statement: During my coffee shift, I saw someone with {{culprit_skin_color}} skin moving quickly near the jewelry store entrance.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (3, 'Was at work in the bookstore helping customers. Statement: A customer in the bookshop asked strange questions about expensive necklaces. I remember something about {{culprit_clothing}}.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (4, 'Was standing outside the bakery carrying out freshly baked bread. Statement: I was carrying bread outside the bakery when I noticed someone with {{culprit_hair_color}} hair looking toward the jewelry window.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (5, 'Stayed outside the flower shop arranging plants. Statement: I was arranging flowers outside when someone with {{culprit_eye_color}} eyes passed by twice. They seemed nervous.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (6, 'Was present in the area as an outside witness. Statement: I saw someone leave the area around {{crime_time}}. I mostly remember the outfit: {{culprit_clothing}}.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (7, 'Walked around the mall as a customer and stood near the display window. Statement: I was near the display window when someone with {{culprit_hair_color}} hair brushed past me.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (8, 'Looked at items as a customer and heard quick footsteps. Statement: I heard footsteps right before the alarm. When I turned around, I noticed someone wearing {{culprit_clothing}}.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (9, 'Was in the building as a customer close to the side entrance. Statement: Someone with {{culprit_skin_color}} skin was standing unusually close to the side entrance. I thought it was odd.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (10, 'Spent time near the shops in the mall. Statement: I remember seeing a {{culprit_gender}} person near the store around the time of the theft.');
+
+-- Person 11 - 20
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (11, 'Arrived quickly at the scene to cover the case for their report. Statement: For my report, I wrote down one detail from a witness: {{culprit_hair_color}} hair. It came up more than once.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (12, 'Attended their usual market stall in the square outside. Statement: From my market stall, I saw someone with {{culprit_eye_color}} eyes staring at the police car before walking away.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (13, 'Performed watch repairs inside their workshop. Statement: I repair watches, so I notice small details. The person I saw had {{culprit_hair_color}} hair and moved with purpose.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (14, 'Walked around the mall on business to appraise items. Statement: I was looking at the displays when someone wearing {{culprit_clothing}} came very close to the VIP case.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (15, 'Took a walk in the area and passed the entrance to the alley. Statement: I did not see the face clearly, but I remember {{culprit_hair_color}} hair near the alley entrance.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (16, 'Was at work in the jewelry store helping out at the counter. Statement: I was helping a customer when I noticed someone with {{culprit_skin_color}} skin near the counter where {{stolen_item}} was displayed.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (17, 'Monitored the most expensive display cases in the jewelry store. Statement: I have worked here for years. The person near the display did not behave like a normal customer. I noticed {{culprit_clothing}}.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (18, 'Stood ready by the glass cases in the jewelry store during their shift. Statement: Someone passed behind me just before the alarm. I remember seeing {{culprit_hair_color}} hair reflected in the glass case.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (19, 'Welcomed visitors at the entrance of the jewelry store. Statement: I greeted someone around {{crime_time}}, but they avoided eye contact. Their eyes looked {{culprit_eye_color}}.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (20, 'Stayed in the front section of the jewelry store to check the display. Statement: I was checking the front display when I noticed a person with {{culprit_skin_color}} skin leaving in a hurry.');
+
+-- Person 21 - 30
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (21, 'Was shopping and stood close to the entrance area. Statement: I remember someone stylish near the entrance. The clearest thing was the clothing: {{culprit_clothing}}.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (22, 'Examined the selection of rare necklaces close to the display case. Statement: Collectors notice details. I saw a {{culprit_gender}} person near the necklace case shortly before the alarm.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (23, 'Was briefly inside the store as a customer to browse the selection. Statement: I was only there briefly, but I saw someone with {{culprit_hair_color}} hair near the door.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (24, 'Was logging or dropping off a delivery nearby. Statement: I had a delivery nearby. Someone with {{culprit_skin_color}} skin crossed in front of me carrying themselves like they were in a rush.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (25, 'Stayed in the store briefly as a customer before moving on. Statement: I saw someone before I left. I remember thinking their {{culprit_hair_color}} hair stood out.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (26, 'Looked at the displays on the other side of the room. Statement: I noticed a person near the side of the room. The outfit looked like {{culprit_clothing}}.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (27, 'Was in the room as a customer and observed the behavior around the display case. Statement: I wrote down what I saw: {{culprit_eye_color}} eyes, quick movements, and a glance toward the display case.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (28, 'Entered the store and passed the doorway during the theft. Statement: Someone passed me near the entrance. I cannot swear to the face, but the person had {{culprit_hair_color}} hair.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (29, 'Observed the commotion and the exit after the alarm went off. Statement: I saw someone leave after the commotion. The detail I remember best is {{culprit_skin_color}} skin and {{culprit_clothing}}.');
+INSERT INTO Alibi (person_id, formatted_alibi) VALUES (30, 'Stood looking at the exhibited items in the shop. Statement: Before the alarm, I noticed someone with {{culprit_eye_color}} eyes looking closely at {{stolen_item}}.');
 
 commit;
 

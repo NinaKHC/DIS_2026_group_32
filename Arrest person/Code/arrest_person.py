@@ -58,14 +58,14 @@ CORRECT_SUSPECT: str = ""
 _LEFT = {
     "photo_left": 19.0, "photo_top": 15.0, "photo_w": 24.0, "photo_h": 34.0,
     "click_x": 15.5, "click_y": 13.0, "click_w": 33.0, "click_h": 76.0,
-    "x_val": 29.5,
-    "y_name": 55.5, "y_occ": 62.0, "y_age": 68.0, "y_feat": 74.0, "y_alibi": 81.0,
+    "x_val": 32.5,
+    "y_name": 55.5, "y_occ": 59.0, "y_age": 62.0, "y_feat": 69.0, "y_alibi": 72.0,
 }
 _RIGHT = {
     "photo_left": 55.0, "photo_top": 15.0, "photo_w": 24.0, "photo_h": 34.0,
     "click_x": 51.5, "click_y": 13.0, "click_w": 33.0, "click_h": 76.0,
-    "x_val": 65.5,
-    "y_name": 55.5, "y_occ": 62.0, "y_age": 68.0, "y_feat": 74.0, "y_alibi": 81.0,
+    "x_val": 58.5,
+    "y_name": 55.5, "y_occ": 59.0, "y_age": 62.0, "y_feat": 69.0, "y_alibi": 72.0,
 }
 # ─────────────────────────────────────────────────────────────────────────────
 

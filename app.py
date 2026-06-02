@@ -37,6 +37,14 @@ PAGE_CONFIGS: dict[str, PageConfig] = {
         function_names=("show_start_screen",),
     ),
 
+    "intro": PageConfig(
+        key="intro",
+        title="Intro",
+        folder_names=("Intro", "intro"),
+        module_names=("intro.py",),
+        function_names=("show_intro",),
+    ),
+
     "main_menu": PageConfig(
         key="main_menu",
         title="Main Menu",

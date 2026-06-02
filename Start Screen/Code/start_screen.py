@@ -222,8 +222,9 @@ def show_start_screen() -> None:
                 )
                 st.stop()
 
-            start_new_game(start_page="main_menu")
-            st.session_state["page"] = "main_menu"
+            start_page = "main_menu" if st.session_state.get("intro_seen", False) else "intro"
+            start_new_game(start_page=start_page)
+            st.session_state["page"] = start_page
             st.rerun()
 
     with col2:
