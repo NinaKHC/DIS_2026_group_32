@@ -1,11 +1,18 @@
 import base64
 import math
+import os
 import sys
 from pathlib import Path
 
 from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
+
+try:
+    import psycopg2
+    from psycopg2 import sql
+except ImportError:
+    psycopg2 = None
 
 
 project_root = Path(__file__).resolve().parents[2]
@@ -23,26 +30,18 @@ from screen_arrows import screen_arrow_css, make_screen_arrow_button
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
 
-# Tilføj stjålne genstande her.
-STOLEN_ITEMS = [
-    {
-        "name": "",
-        "image_filename": None,   # filnavn i Assets-mappen, eller None
-    },
-    # Tilføj flere genstande her...
-]
 
 # Side 1 (start page): titel dækker venstre øverste halvdel → 2 slots i bunden til venstre + 4 til højre = 6 slots
 START_PAGE_SLOTS = 6
 START_PAGE_BOXES = [
     # Venstre side — under titelbanneret
-    ( 9.0, 48.0, 14.0, 38.0),   # Slot 0
-    (25.5, 48.0, 14.0, 38.0),   # Slot 1
+    ( 15.0, 41.0, 14.0, 38.0),   # Slot 0
+    ( 32.0, 39.0, 14.0, 38.0),   # Slot 1
     # Højre side — 2×2 gitter
-    (54.5,  5.5, 16.0, 33.0),   # Slot 2
-    (73.0,  5.5, 16.0, 33.0),   # Slot 3
-    (54.5, 50.0, 16.0, 37.0),   # Slot 4
-    (73.0, 50.0, 16.0, 37.0),   # Slot 5
+    (50.0,  6.0, 16.0, 33.0),   # Slot 2
+    (68.0,  6.0, 16.0, 33.0),   # Slot 3
+    (51.0, 42.0, 16.0, 37.0),   # Slot 4
+    (69.0, 42.0, 16.0, 37.0),   # Slot 5
 ]
 
 # Side 2+ (new page): 8 slots i 2 rækker × 4 kolonner
@@ -59,9 +58,60 @@ NEW_PAGE_BOXES = [
 ]
 
 
+@st.cache_data
+def _get_stolen_items_from_db() -> list[dict]:
+    """Fetch 6 random stolen items from the database with their details."""
+    if not psycopg2:
+        return []
+    
+    try:
+        database_url = os.getenv(
+            "DATABASE_URL",
+            "postgresql://postgres:postgres@localhost:5432/streamlit_db"
+        )
+        conn = psycopg2.connect(database_url)
+        cur = conn.cursor()
+        
+        # Get 6 random stolen items
+        cur.execute("""
+            SELECT item_id, description, time_of_crime
+            FROM item_stolen
+            ORDER BY RANDOM()
+            LIMIT 6
+        """)
+        
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        items = []
+        for item_id, description, time_of_crime in rows:
+            # Format time_of_crime (TIMESTAMP)
+            time_str = time_of_crime.strftime("%H:%M") if time_of_crime else "Unknown"
+            
+            items.append({
+                "item_id": item_id,
+                "description": description or "",
+                "time_stolen": time_str,
+                "image_filename": f"item{item_id}.png",
+            })
+        
+        return items
+    
+    except Exception as e:
+        st.error(f"Could not fetch items from database: {e}")
+        return []
+
+
 def image_to_base64(image_path: Path) -> str:
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode()
+
+
+@st.cache_data
+def cached_image_to_base64(image_path: Path) -> str:
+    """Cached version of image_to_base64 to avoid re-encoding images on every render."""
+    return image_to_base64(image_path)
 
 
 def get_aspect_ratio(image_path: Path) -> float:
@@ -128,16 +178,21 @@ def _build_slots_html(page_items: list, boxes: list) -> str:
         if item.get("image_filename"):
             img_path = ASSETS_DIR / item["image_filename"]
             if img_path.exists():
-                b64 = image_to_base64(img_path)
-                img_html = f'<img src="data:image/png;base64,{b64}" alt="{item.get("name", "")}">'
-        name = item.get("name", "")
+                b64 = cached_image_to_base64(img_path)
+                img_html = f'<img src="data:image/png;base64,{b64}" alt="{item.get("description", "")}" style="width:85%;height:70%;object-fit:contain;margin:0 auto;">'
+        
+        description = item.get("description", "")
+        time_stolen = item.get("time_stolen", "")
+        
         html += f"""
         <div
             class="si-slot"
-            style="left:{left}%;top:{top}%;width:{width}%;height:{height}%;"
-            title="{name}">
+            style="left:{left}%;top:{top}%;width:{width}%;height:{height}%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:3%;">
             {img_html}
-            {f'<span class="si-slot-label">{name}</span>' if name else ""}
+            <div style="text-align:center;font-size:0.75vw;color:#d4a574;margin-top:2%;width:90%;">
+                <div style="font-weight:bold;line-height:1.1;font-size:0.7vw;">{description}</div>
+                <div style="font-size:0.6vw;color:#a0826d;margin-top:1%;">Stolen: {time_stolen}</div>
+            </div>
         </div>
         """
     return html
@@ -308,12 +363,15 @@ def show_stolen_items() -> None:
     if "si_page" not in st.session_state:
         st.session_state.si_page = 0
 
-    num_items = len(STOLEN_ITEMS)
+    # Get 6 random stolen items from database
+    all_items = _get_stolen_items_from_db()
+    
+    num_items = len(all_items)
     total_pages = _total_pages(num_items)
     current_page = max(0, min(st.session_state.si_page, total_pages - 1))
     st.session_state.si_page = current_page
 
-    page_items = _items_on_page(current_page, STOLEN_ITEMS)
+    page_items = _items_on_page(current_page, all_items)
 
     back_btn_html = get_back_button_html(btn_key="si_back")
     back_btn_css = get_back_button_css(left="1.2%", top="2.0%", width="13%")
