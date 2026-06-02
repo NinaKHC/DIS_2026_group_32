@@ -75,6 +75,12 @@ def _b64(path: Path) -> str:
         return base64.b64encode(f.read()).decode()
 
 
+@st.cache_data
+def _cached_b64(path: Path) -> str:
+    """Cached version of _b64 to avoid re-encoding images on every render."""
+    return _b64(path)
+
+
 def _aspect(path: Path) -> float:
     with Image.open(path) as img:
         w, h = img.size
@@ -182,7 +188,7 @@ def _card_html(suspect: dict | None, cfg: dict) -> str:
                 f'<img style="position:absolute;left:{cfg["photo_left"]}%;top:{cfg["photo_top"]}%;'
                 f'width:{cfg["photo_w"]}%;height:{cfg["photo_h"]}%;'
                 f'object-fit:contain;z-index:8;pointer-events:none;"'
-                f' src="data:image/png;base64,{_b64(p)}" alt="photo">'
+                f' src="data:image/png;base64,{_cached_b64(p)}" alt="photo">'
             )
 
     s = (
@@ -407,7 +413,7 @@ def show_arrest_suspect() -> None:
         st.error(f"Baggrundsbillede ikke fundet: {bg_path}")
         st.stop()
 
-    bg_b64 = _b64(bg_path)
+    bg_b64 = _cached_b64(bg_path)
     aspect  = _aspect(bg_path)
 
     suspects = _get_arrest_candidates()
