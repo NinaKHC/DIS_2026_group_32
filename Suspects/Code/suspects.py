@@ -1,6 +1,7 @@
 import base64
 import html
 import sys
+import re 
 from pathlib import Path
 
 from PIL import Image
@@ -56,7 +57,30 @@ IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 # "photo" kan være en absolut sti til et billede, eller None.
 CHARS_DIR = project_root / "Characters"
 
+SQL_FILE_PATH = project_root / "database.sql"
 
+def get_alibi_directly_from_sql_text(person_id: int) -> str:
+    """Læser database.sql og sikrer, at den KUN udtager data fra Alibi-tabellen."""
+    try:
+        if not SQL_FILE_PATH.exists():
+            return f"Error: database.sql not found at {SQL_FILE_PATH}"
+            
+        with open(SQL_FILE_PATH, "r", encoding="utf-8") as f:
+            sql_content = f.read()
+            
+        # tjekke at person_id matcher, og derefter snuppe teksten.
+        pattern = rf"INSERT\s+INTO\s+Alibi\s+\([^)]*\)\s+VALUES\s*\(\s*{person_id}\s*,\s*'(.*?)'\s*\);"
+        match = re.search(pattern, sql_content)
+        
+        if match:
+            full_text = match.group(1)
+            clean_alibi = full_text.split("Statement:")[0].strip()
+            return clean_alibi
+            
+        return f"No alibi found in SQL file for person ID {person_id}."
+        
+    except Exception as e:
+        return f"Error reading SQL file: {str(e)}"
 
 def _character_photo_path(person_id: int) -> str | None:
     standard_path = CHARS_DIR / f"Char_{person_id}.png"
@@ -206,7 +230,7 @@ def _person_to_suspect(person: dict) -> dict:
         "reason_for_suspicion": "Flagged in Witness Overview",
         "observed_behavior": _short_text(get_witness_statement(person), 130),
         "connection_to_case": f"Presence log: {arrived} - {left}",
-        "alibi": f"Registered presence: {arrived} - {left}",
+        "alibi": get_alibi_directly_from_sql_text(person_id),
         "photo": _character_photo_path(person_id),
     }
 
