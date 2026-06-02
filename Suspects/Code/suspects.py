@@ -48,7 +48,7 @@ from witness_button import (
     render_witness_overview_button_streamlit,
     render_witness_red_button_streamlit,
 )
-from witness_overview import PERSONS, get_witness_statement
+from witness_overview import PERSONS
 
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
@@ -182,20 +182,11 @@ def _suspect_fields_html(suspect: dict) -> str:
             ),
             _field_html("Relationship to Case:", suspect["relationship_to_case"], single=True),
             _field_html("Reason for Suspicion:", suspect["reason_for_suspicion"], single=True),
-            _field_html(
-                "Observed Behavior:",
-                suspect["observed_behavior"],
-                tall=True,
-                chars_per_line=82,
-                extra_class="sf-observed-entry",
-            ),
-            _field_html(
-                "Connection to Case:",
-                suspect["connection_to_case"],
-                single=True,
-                extra_class="sf-connection-entry",
-            ),
-            _field_html("Alibi:", suspect["alibi"], tall=True, chars_per_line=88),
+            
+           '<div style="min-height: 2.5%; margin-bottom: 0.8%;"></div>',
+            
+            _field_html("Connection to Case:", suspect["connection_to_case"], single=True),
+            _field_html("Alibi:", suspect["alibi"], tall=True, chars_per_line=100),
         ]
     )
 
@@ -228,7 +219,6 @@ def _person_to_suspect(person: dict) -> dict:
         ),
         "relationship_to_case": f"{role}; present near case timeline",
         "reason_for_suspicion": "Flagged in Witness Overview",
-        "observed_behavior": _short_text(get_witness_statement(person), 130),
         "connection_to_case": f"Presence log: {arrived} - {left}",
         "alibi": get_alibi_directly_from_sql_text(person_id),
         "photo": _character_photo_path(person_id),
