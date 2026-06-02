@@ -6,6 +6,8 @@ from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
 
+from sqlalchemy import text
+
 
 project_root = Path(__file__).resolve().parents[2]
 back_button_code_dir  = project_root / "Back to main menu" / "Code"
@@ -88,38 +90,42 @@ BG_FILENAME = "Witness overview.png"
 #       for r in cur.fetchall()
 #   ]
 
-PERSONS: list[dict] = [
-    {"id":1,  "name":"Sofia Laurent",    "role":"Investigator",         "gender":"Female",    "hair":"Red",          "eyes":"Green",       "skin":"Medium brown", "arrived":"13:05","left":"18:00","clothing":"Blue blazer, white blouse, grey trousers, brown shoes, gold jewelry",                    "statement":"I arrived after the alarm, but one witness kept mentioning someone with red hair. That detail may matter."},
-    {"id":2,  "name":"Maya Johnson",     "role":"Café employee",        "gender":"Female",    "hair":"Dark brown",   "eyes":"Brown",       "skin":"Dark brown",   "arrived":"07:30","left":"15:30","clothing":"Green shirt, brown t-shirt, black apron, brown pants, black sneakers",                    "statement":"During my coffee shift, I saw someone with medium-brown skin moving quickly near the jewelry store entrance."},
-    {"id":3,  "name":"Alex Wren",        "role":"Bookstore employee",   "gender":"Nonbinary", "hair":"Black",        "eyes":"Dark brown",  "skin":"Fair",         "arrived":"09:15","left":"17:45","clothing":"Grey cardigan, yellow scarf, red trousers, glasses, brown shoes, staff lanyard",          "statement":"A customer asked strange questions about necklaces. I remember something about the outfit."},
-    {"id":4,  "name":"Marcus Reed",      "role":"Bakery employee",      "gender":"Male",      "hair":"Black",        "eyes":"Brown",       "skin":"Light brown",  "arrived":"06:00","left":"14:00","clothing":"Striped shirt, brown apron, dark trousers, green beanie, brown boots",                    "statement":"I was carrying bread outside when I noticed someone with a distinctive hair color looking toward the jewelry window."},
-    {"id":5,  "name":"Elena Bloom",      "role":"Florist employee",     "gender":"Female",    "hair":"Grey-brown",   "eyes":"Green",       "skin":"Olive",        "arrived":"08:00","left":"16:00","clothing":"White blouse, green apron, red skirt, brown boots",                                        "statement":"I was arranging flowers outside when someone passed by twice. They seemed nervous."},
-    {"id":6,  "name":"Rafael Moreno",    "role":"Witness",              "gender":"Male",      "hair":"Dark brown",   "eyes":"Brown",       "skin":"Tan",          "arrived":"11:45","left":"12:20","clothing":"Red shirt, black t-shirt, brown pants, brown bag, sneakers",                               "statement":"I saw someone leave the area around 12:30. I mostly remember the outfit."},
-    {"id":7,  "name":"Luna Hart",        "role":"Customer",             "gender":"Female",    "hair":"Blonde",       "eyes":"Blue",        "skin":"Fair",         "arrived":"12:05","left":"12:50","clothing":"Grey beanie, blue vest, white sweater, black skirt, sneakers",                             "statement":"I was near the display window when someone with distinctive hair brushed past me."},
-    {"id":8,  "name":"Nia Carter",       "role":"Customer",             "gender":"Female",    "hair":"Dark brown",   "eyes":"Hazel",       "skin":"Dark brown",   "arrived":"12:10","left":"12:45","clothing":"Orange jacket, black top, blue jeans, black boots",                                        "statement":"I heard footsteps right before the alarm. When I turned around, I noticed the clothing."},
-    {"id":9,  "name":"Rowan Vale",       "role":"Customer",             "gender":"Nonbinary", "hair":"Silver-grey",  "eyes":"Grey-green",  "skin":"Olive",        "arrived":"12:00","left":"12:40","clothing":"Grey shirt, black top, brown pants, black sneakers",                                        "statement":"Someone was standing unusually close to the side entrance. I thought it was odd."},
-    {"id":10, "name":"Jamal Brooks",     "role":"Customer",             "gender":"Male",      "hair":"Black",        "eyes":"Brown",       "skin":"Medium brown", "arrived":"12:15","left":"13:05","clothing":"Green jacket, white sweater, black pants, green sneakers",                                  "statement":"I remember seeing someone near the store around the time of the theft."},
-    {"id":11, "name":"Clara Finch",      "role":"Reporter",             "gender":"Female",    "hair":"Red",          "eyes":"Green",       "skin":"Fair",         "arrived":"13:20","left":"16:30","clothing":"Blue beanie, green sweater, white shirt, grey pants, bag, sneakers",                       "statement":"For my report, I wrote down one detail: distinctive hair color. It came up more than once."},
-    {"id":12, "name":"Isabella Cruz",    "role":"Market employee",      "gender":"Female",    "hair":"Covered",      "eyes":"Brown",       "skin":"Dark brown",   "arrived":"08:30","left":"17:00","clothing":"Yellow jacket, blue jumpsuit, brown bag, gold earrings, white sneakers",                   "statement":"From my market stall, I saw someone staring at the police car before walking away."},
-    {"id":13, "name":"Hiro Tanaka",      "role":"Watchmaker",           "gender":"Male",      "hair":"Silver-grey",  "eyes":"Brown",       "skin":"Tan",          "arrived":"09:00","left":"16:30","clothing":"Dark blue coat, white shirt, blue scarf, grey trousers, brown bag, brown boots",            "statement":"I repair watches, so I notice small details. The person I saw moved with purpose."},
-    {"id":14, "name":"Priya Kapoor",     "role":"Art dealer",           "gender":"Female",    "hair":"Black-grey",   "eyes":"Brown",       "skin":"Medium brown", "arrived":"11:30","left":"12:55","clothing":"Green coat, yellow shirt, red scarf, red pants, brown boots, gold jewelry",               "statement":"I was looking at the displays when someone came very close to the VIP case."},
-    {"id":15, "name":"Rex Voss",         "role":"Customer",             "gender":"Male",      "hair":"Platinum",     "eyes":"Brown",       "skin":"Fair",         "arrived":"12:20","left":"12:38","clothing":"Black leather jacket, red t-shirt, green jeans, chains, gloves, black boots",              "statement":"I did not see the face clearly, but I remember distinctive hair near the alley entrance."},
-    {"id":16, "name":"Amara Rodriguez",  "role":"Jewelry employee",     "gender":"Female",    "hair":"Dark brown",   "eyes":"Amber-brown", "skin":"Medium brown", "arrived":"09:00","left":"17:30","clothing":"Blue dress, white cardigan, blue scarf, name tag, gold earrings, blue shoes",             "statement":"I was helping a customer when I noticed someone near the counter where the necklace was displayed."},
-    {"id":17, "name":"Eleanor Whitmore", "role":"Sr. jewelry employee", "gender":"Female",    "hair":"Silver-grey",  "eyes":"Green",       "skin":"Fair",         "arrived":"08:45","left":"17:15","clothing":"White blouse, blue vest, blue long skirt, blue scarf, glasses, name tag, blue shoes",     "statement":"I have worked here for years. The person near the display did not behave like a normal customer."},
-    {"id":18, "name":"Jordan Ellis",     "role":"Jewelry employee",     "gender":"Nonbinary", "hair":"Red",          "eyes":"Hazel",       "skin":"Olive",        "arrived":"09:30","left":"18:00","clothing":"Blue suit, white turtleneck, name tag, gold necklace, blue shoes",                         "statement":"Someone passed behind me just before the alarm. I saw distinctive hair reflected in the glass case."},
-    {"id":19, "name":"James Thompson",   "role":"Jewelry employee",     "gender":"Male",      "hair":"Black",        "eyes":"Brown",       "skin":"Dark brown",   "arrived":"09:00","left":"17:00","clothing":"White shirt, blue vest, blue tie, blue trousers, name tag, brown shoes",                   "statement":"I greeted someone around 12:30, but they avoided eye contact."},
-    {"id":20, "name":"Mei Sato",         "role":"Jewelry employee",     "gender":"Female",    "hair":"Dark brown",   "eyes":"Brown",       "skin":"Fair",         "arrived":"10:00","left":"18:30","clothing":"Blue blazer, white blouse, blue skirt, blue scarf, name tag, black shoes",                 "statement":"I was checking the front display when I noticed a person leaving in a hurry."},
-    {"id":21, "name":"Valentina Moretti","role":"Customer",             "gender":"Female",    "hair":"Dark brown",   "eyes":"Hazel",       "skin":"Medium brown", "arrived":"12:05","left":"12:48","clothing":"Pink coat, blue blouse, white pants, gold earrings, bracelets, shoes",                     "statement":"I remember someone stylish near the entrance. The clearest thing was the clothing."},
-    {"id":22, "name":"Arthur Kingsley",  "role":"Collector",            "gender":"Male",      "hair":"White",        "eyes":"Brown",       "skin":"Dark brown",   "arrived":"11:55","left":"13:10","clothing":"Blue blazer, white turtleneck, grey trousers, grey cap, glasses, cane, red shoes",        "statement":"Collectors notice details. I saw someone near the necklace case shortly before the alarm."},
-    {"id":23, "name":"Yumi Nakamura",    "role":"Customer",             "gender":"Female",    "hair":"Black",        "eyes":"Brown",       "skin":"Fair",         "arrived":"12:25","left":"12:42","clothing":"Red jacket, white t-shirt, blue skirt, black socks, white sneakers, black bag",           "statement":"I was only there briefly, but I saw someone near the door."},
-    {"id":24, "name":"Bruno Vargas",     "role":"Delivery driver",      "gender":"Male",      "hair":"Black",        "eyes":"Brown",       "skin":"Tan",          "arrived":"12:18","left":"12:34","clothing":"Orange vest, blue shirt, green pants, black watch, brown boots",                            "statement":"I had a delivery nearby. Someone crossed in front of me like they were in a rush."},
-    {"id":25, "name":"Margaret Green",   "role":"Customer",             "gender":"Female",    "hair":"White",        "eyes":"Brown",       "skin":"Fair",         "arrived":"11:40","left":"12:15","clothing":"Purple cardigan, yellow blouse, green long skirt, pearl earrings, glasses, red shoes",    "statement":"Before I left, I noticed someone. I remember thinking their hair stood out."},
-    {"id":26, "name":"Scarlett Hayes",   "role":"Customer",             "gender":"Female",    "hair":"Red",          "eyes":"Blue",        "skin":"Fair",         "arrived":"12:00","left":"12:33","clothing":"Blue blouse, black skirt, black tights, gold earrings, black shoes",                       "statement":"I remember someone near the entrance. The clearest thing was the outfit."},
-    {"id":27, "name":"Nova Blake",       "role":"Customer",             "gender":"Nonbinary", "hair":"Silver-grey",  "eyes":"Green",       "skin":"Medium brown", "arrived":"12:12","left":"12:52","clothing":"Yellow shirt, black turtleneck, black trousers, black boots, watch, necklace",             "statement":"I wrote down what I saw: distinctive eyes, quick movements, a glance toward the display."},
-    {"id":28, "name":"Adrian Wolfe",     "role":"Customer",             "gender":"Male",      "hair":"Brown",        "eyes":"Hazel",       "skin":"Olive",        "arrived":"11:50","left":"12:45","clothing":"Brown coat, black turtleneck, dark trousers, black belt, black shoes",                      "statement":"Someone passed me near the entrance. I cannot swear to the face, but I remember the hair."},
-    {"id":29, "name":"Zara Monroe",      "role":"Customer",             "gender":"Female",    "hair":"Blonde",       "eyes":"Brown",       "skin":"Dark brown",   "arrived":"12:08","left":"12:58","clothing":"Red turtleneck, brown trousers, brown belt, gold necklace, brown boots",                   "statement":"I saw someone leave after the commotion. The detail I remember best is the skin tone."},
-    {"id":30, "name":"Daniel Pierce",    "role":"Customer",             "gender":"Male",      "hair":"Brown",        "eyes":"Blue",        "skin":"Fair",         "arrived":"11:35","left":"12:25","clothing":"Green jacket, white shirt, blue jeans, brown belt, brown shoes",                            "statement":"Before the alarm, I noticed someone looking closely at the necklace display."},
-]
+conn = st.connection("postgresql", type="sql")
+
+num_witnesses = conn.session.execute(text("SELECT COUNT(*) FROM Person;")).first()[0]
+id = conn.session.execute(text("SELECT person_id FROM Person;")).all()
+names = conn.session.execute(text("SELECT name FROM Person;")).all()
+gender = conn.session.execute(text("SELECT gender From Person")).all()
+clothing = conn.session.execute(text("SELECT clothing FROM Person")).all()
+eyes_color = conn.session.execute(text("SELECT eye_color FROM Person")).all()
+skin_color = conn.session.execute(text("SELECT skin_color FROM Person")).all()
+role = conn.session.execute(text("SELECT role FROM Person")).all()
+hair_color = conn.session.execute(text("SELECT hair_color FROM Person")).all()
+
+PERSONS = [{
+        "id":1,
+        "name": "",
+        "gender": "",
+        "clothing": "",
+        "hair": "",
+        "eyes": "",
+        "skin": "",
+        "role":"todo",
+        "arrived": "unimplemented",
+        "hair": "",
+        "statement": "unimplemented"
+    } for x in range(num_witnesses)]
+
+for i in range(num_witnesses):
+    PERSONS[id[i][0] - 1]["id"] = id[i][0]
+    PERSONS[id[i][0] - 1]["name"] = names[i][0]
+    PERSONS[id[i][0] - 1]["gender"] = gender[i][0]
+    PERSONS[id[i][0] - 1]["clothing"] = clothing[i][0]
+    PERSONS[id[i][0] - 1]["eyes"] = eyes_color[i][0]
+    PERSONS[id[i][0] - 1]["skin"] = skin_color[i][0]
+    PERSONS[id[i][0] - 1]["hair"] = hair_color[i][0]
+    PERSONS[id[i][0] - 1]["role"] = role[i][0]
+    #PERSONS[id[i][0] - 1]["arrived"] = conn.session.execute(text("SELECT arrived_at FROM Presence WHERE person_id = " + str(id[i][0]))).all()[0]
 
 STOLEN_ITEM = "the necklace"
 CRIME_TIME = "12:30"
