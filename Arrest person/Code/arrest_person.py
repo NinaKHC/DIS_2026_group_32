@@ -58,14 +58,14 @@ CORRECT_SUSPECT: str = ""
 _LEFT = {
     "photo_left": 19.0, "photo_top": 15.0, "photo_w": 24.0, "photo_h": 34.0,
     "click_x": 15.5, "click_y": 13.0, "click_w": 33.0, "click_h": 76.0,
-    "x_val": 29.5,
-    "y_name": 55.5, "y_occ": 62.0, "y_age": 68.0, "y_feat": 74.0, "y_alibi": 81.0,
+    "x_val": 32.5,
+    "y_name": 55.5, "y_occ": 59.0, "y_age": 62.0, "y_feat": 69.0, "y_alibi": 72.0,
 }
 _RIGHT = {
     "photo_left": 55.0, "photo_top": 15.0, "photo_w": 24.0, "photo_h": 34.0,
     "click_x": 51.5, "click_y": 13.0, "click_w": 33.0, "click_h": 76.0,
-    "x_val": 65.5,
-    "y_name": 55.5, "y_occ": 62.0, "y_age": 68.0, "y_feat": 74.0, "y_alibi": 81.0,
+    "x_val": 58.5,
+    "y_name": 55.5, "y_occ": 59.0, "y_age": 62.0, "y_feat": 69.0, "y_alibi": 72.0,
 }
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -73,12 +73,6 @@ _RIGHT = {
 def _b64(path: Path) -> str:
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
-
-
-@st.cache_data
-def _cached_b64(path: Path) -> str:
-    """Cached version of _b64 to avoid re-encoding images on every render."""
-    return _b64(path)
 
 
 def _aspect(path: Path) -> float:
@@ -188,7 +182,7 @@ def _card_html(suspect: dict | None, cfg: dict) -> str:
                 f'<img style="position:absolute;left:{cfg["photo_left"]}%;top:{cfg["photo_top"]}%;'
                 f'width:{cfg["photo_w"]}%;height:{cfg["photo_h"]}%;'
                 f'object-fit:contain;z-index:8;pointer-events:none;"'
-                f' src="data:image/png;base64,{_cached_b64(p)}" alt="photo">'
+                f' src="data:image/png;base64,{_b64(p)}" alt="photo">'
             )
 
     s = (
@@ -413,7 +407,7 @@ def show_arrest_suspect() -> None:
         st.error(f"Baggrundsbillede ikke fundet: {bg_path}")
         st.stop()
 
-    bg_b64 = _cached_b64(bg_path)
+    bg_b64 = _b64(bg_path)
     aspect  = _aspect(bg_path)
 
     suspects = _get_arrest_candidates()
