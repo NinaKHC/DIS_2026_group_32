@@ -22,7 +22,7 @@ env/
 Thumbs.db
 
 # Streamlit
-.streamlit/secrets.toml
+#.streamlit/secrets.toml
 
 
 .claude
