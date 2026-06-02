@@ -180,6 +180,12 @@ def _b64(path: Path) -> str:
         return base64.b64encode(f.read()).decode()
 
 
+@st.cache_data
+def _cached_b64(path: Path) -> str:
+    """Cached version of _b64 to avoid re-encoding images on every render."""
+    return _b64(path)
+
+
 def _aspect(path: Path) -> float:
     with Image.open(path) as img:
         w, h = img.size
@@ -243,6 +249,14 @@ def get_witness_statement(person: dict | None) -> str:
 
 
 def _build_list_html(selected_id: int, suspicious_ids: set, persons: list[dict]) -> str:
+    # Header row with column names
+    header = (
+        f'<div class="wo-row wo-header">'
+        f'<span class="wo-name">Name</span>'
+        f'<span class="wo-role">Role</span>'
+        f'<span class="wo-check-header">Suspect</span>'
+        f'</div>'
+    )
     rows = ""
     for p in persons:
         sel_cls  = "wo-selected"   if p["id"] == selected_id  else ""
@@ -256,7 +270,7 @@ def _build_list_html(selected_id: int, suspicious_ids: set, persons: list[dict])
             f'<span class="wo-check" onclick="event.stopPropagation();toggleSusp({p["id"]})">{check}</span>'
             f'</div>'
         )
-    return rows
+    return header + rows
 
 
 
@@ -315,7 +329,7 @@ def show_witness_overview() -> None:
         )
         st.stop()
 
-    bg_b64 = _b64(bg_path)
+    bg_b64 = _cached_b64(bg_path)
     aspect  = _aspect(bg_path)
 
     # ── Session state ─────────────────────────────────────────────────────────
@@ -456,6 +470,10 @@ def show_witness_overview() -> None:
         box-sizing:border-box;
     }}
     .wo-row:hover{{background:rgba(180,120,40,0.15);}}
+    .wo-header{{background:rgba(110,70,25,0.5)!important;cursor:default;border-bottom:2px solid rgba(110,70,25,0.8);padding:0.5% 1%;}}
+    .wo-header:hover{{background:rgba(110,70,25,0.5)!important;}}
+    .wo-header .wo-name,.wo-header .wo-role,.wo-header .wo-check-header{{font-weight:700;color:#1a0e07;font-style:normal;}}
+    .wo-check-header{{width:1.3em;height:1.3em;display:flex;align-items:center;justify-content:center;font-size:clamp(6px,0.7vw,11px);color:#8B5E3C;font-weight:bold;flex-shrink:0;background:transparent;border:none;}}
     .wo-selected{{background:rgba(180,120,40,0.28)!important;}}
     .wo-suspicious .wo-name{{color:#8B2020;font-weight:700;}}
 

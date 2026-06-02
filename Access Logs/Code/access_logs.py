@@ -1,11 +1,13 @@
 import base64
 import math
+import os
 import sys
 from pathlib import Path
 
 from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
+from sqlalchemy import create_engine, text
 
 
 project_root = Path(__file__).resolve().parents[2]
@@ -23,15 +25,65 @@ from screen_arrows import screen_arrow_css, make_screen_arrow_button
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
 
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/streamlit_db",
+)
+
+
+def fetch_presence_data() -> list[dict]:
+    """
+    Fetch presence data from the Presence table and join with Person table.
+    Returns a list of dictionaries with person name, arrival time, departure time, and work status.
+    """
+    try:
+        engine = create_engine(DATABASE_URL)
+        
+        with engine.connect() as connection:
+            query = text("""
+                SELECT 
+                    p.name,
+                    pr.arrived_at,
+                    pr.left_at,
+                    pr.was_working
+                FROM Presence pr
+                JOIN Person p ON pr.person_id = p.person_id
+                ORDER BY pr.arrived_at ASC
+            """)
+            
+            result = connection.execute(query)
+            rows = result.fetchall()
+            
+            st.write(f"Debug: Fetched {len(rows)} rows from database")
+            
+            access_log = []
+            for row in rows:
+                name, arrived_at, left_at, was_working = row
+                
+                # Extract time in HH:MM format
+                arrived_time = arrived_at.strftime("%H:%M") if arrived_at else ""
+                left_time = left_at.strftime("%H:%M") if left_at else ""
+                
+                # Convert was_working boolean to "Ja"/"Nej"
+                purchased = "Ja" if was_working else "Nej"
+                
+                access_log.append({
+                    "person": name,
+                    "arrived": arrived_time,
+                    "left": left_time,
+                    "purchased": purchased
+                })
+            
+            return access_log
+    
+    except Exception as e:
+        st.error(f"Failed to fetch presence data: {e}")
+        return []
+
+
 # ── Adgangslog ────────────────────────────────────────────────────────────────
-# Populér fra SQL ved at bygge denne liste dynamisk.
-# "purchased" kan være "Ja", "Nej" eller "" (tom).
-ACCESS_LOG: list[dict] = [
-    # Eksempel:
-    # {"person": "Viktor Hargreaves", "arrived": "11:42", "left": "13:15", "purchased": "Nej"},
-    # {"person": "Elena Marsh",       "arrived": "12:05", "left": "12:50", "purchased": "Ja"},
-]
-# ─────────────────────────────────────────────────────────────────────────────
+# Will be populated from the database when show_access_logs() is called
+ACCESS_LOG: list[dict] = []
 
 # ── Tabel-layout på billedet (i % af billedets bredde/højde) ─────────────────
 # Juster x-værdierne hvis teksten ikke lander på de korrekte kolonner.
@@ -77,6 +129,7 @@ def _build_rows_html(page_entries: list[dict]) -> str:
             "white-space:nowrap;"
             "overflow:hidden;"
             "text-overflow:ellipsis;"
+            "z-index:10;"
             f"top:{y}%;"
         )
 
@@ -86,6 +139,8 @@ def _build_rows_html(page_entries: list[dict]) -> str:
         <span style="{cell_style}left:{TABLE['x_left']}%;max-width:11%;">{left}</span>
         <span style="{cell_style}left:{TABLE['x_purchased']}%;max-width:14%;">{purchased}</span>
         """
+    
+    st.write(f"Debug: Built HTML for {len(page_entries)} entries")
     return html
 
 
@@ -107,7 +162,15 @@ def _streamlit_chrome_css() -> str:
 
 
 def show_access_logs() -> None:
+    global ACCESS_LOG
+    
+    # Fetch data from database if not already loaded
+    if not ACCESS_LOG:
+        ACCESS_LOG = fetch_presence_data()
+    
     bg_path = ASSETS_DIR / "Access logs.png"
+    st.write(f"Debug: Looking for background at: {bg_path}")
+    st.write(f"Debug: Background exists: {bg_path.exists()}")
     if not bg_path.exists():
         st.error(f"Baggrundsbillede ikke fundet: {bg_path}")
         st.stop()
@@ -126,6 +189,8 @@ def show_access_logs() -> None:
 
     start = current_page * ROWS_PER_PAGE
     page_entries = ACCESS_LOG[start : start + ROWS_PER_PAGE]
+    
+    st.write(f"Debug: Page entries: {page_entries[:1]}")  # Show first entry
 
     rows_html = _build_rows_html(page_entries)
 

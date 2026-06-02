@@ -35,6 +35,12 @@ def _b64(path: Path) -> str:
         return base64.b64encode(f.read()).decode()
 
 
+@st.cache_data
+def _cached_b64(path: Path) -> str:
+    """Cached version of _b64 to avoid re-encoding images on every render."""
+    return _b64(path)
+
+
 def _aspect(path: Path) -> float:
     with Image.open(path) as img:
         w, h = img.size
@@ -47,7 +53,7 @@ def show_you_win() -> None:
         st.error(f"Billede ikke fundet: {bg_path}")
         st.stop()
 
-    bg_b64  = _b64(bg_path)
+    bg_b64  = _cached_b64(bg_path)
     aspect  = _aspect(bg_path)
 
     guilty_name  = st.session_state.get("result_guilty_name",  "")
@@ -61,7 +67,7 @@ def show_you_win() -> None:
                 f'<img style="position:absolute;left:{PHOTO_LEFT}%;top:{PHOTO_TOP}%;'
                 f'width:{PHOTO_WIDTH}%;height:{PHOTO_HEIGHT}%;'
                 f'object-fit:contain;z-index:10;pointer-events:none;user-select:none;"'
-                f' src="data:image/png;base64,{_b64(p)}" alt="Guilty person">'
+                f' src="data:image/png;base64,{_cached_b64(p)}" alt="Guilty person">'
             )
 
     name_style = (

@@ -244,6 +244,13 @@ def image_to_base64(image_path: Path) -> str:
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode()
 
+
+@st.cache_data
+def cached_image_to_base64(image_path: Path) -> str:
+    """Cached version of image_to_base64 to avoid re-encoding images on every render."""
+    return image_to_base64(image_path)
+
+
 def find_background_image(assets_dir: Path) -> Path:
     for file_path in sorted(assets_dir.iterdir()):
         if file_path.is_file() and file_path.suffix.lower() in IMAGE_EXTENSIONS:
@@ -294,7 +301,7 @@ def show_witnesses() -> None:
         st.error(str(error))
         st.stop()
 
-    background_b64 = image_to_base64(background_path)
+    background_b64 = cached_image_to_base64(background_path)
 
     with Image.open(background_path) as img:
         img_width, img_height = img.size
@@ -327,7 +334,7 @@ def show_witnesses() -> None:
     if witness.get("photo"):
         photo_path = Path(witness["photo"])
         if photo_path.exists():
-            photo_b64 = image_to_base64(photo_path)
+            photo_b64 = cached_image_to_base64(photo_path)
             photo_html = f"""
             <img
                 class="witness-photo"

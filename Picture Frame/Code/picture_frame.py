@@ -27,6 +27,8 @@ Eksempel i en side:
 import base64
 from pathlib import Path
 
+import streamlit as st
+
 
 _ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
 _FRAME_FILE = _ASSETS_DIR / "Picture_frame.png"
@@ -35,6 +37,12 @@ _FRAME_FILE = _ASSETS_DIR / "Picture_frame.png"
 def _b64(path: Path) -> str:
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
+
+
+@st.cache_data
+def _cached_b64(path: Path) -> str:
+    """Cached version of _b64 to avoid re-encoding images on every render."""
+    return _b64(path)
 
 
 def get_picture_frame_css(
@@ -137,11 +145,11 @@ def get_picture_frame_html(
     if not _FRAME_FILE.exists():
         return f'<!-- Picture_frame.png ikke fundet: {_FRAME_FILE} -->'
 
-    frame_b64 = _b64(_FRAME_FILE)
+    frame_b64 = _cached_b64(_FRAME_FILE)
 
     photo_tag = ""
     if photo_path is not None and Path(photo_path).exists():
-        photo_b64 = _b64(Path(photo_path))
+        photo_b64 = _cached_b64(Path(photo_path))
         photo_tag = (
             f'<div class="pf-photo-clip">'
             f'<img class="pf-photo" '
