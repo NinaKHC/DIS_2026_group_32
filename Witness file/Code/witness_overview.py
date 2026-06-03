@@ -59,10 +59,13 @@ except ImportError:
         return None
 
 try:
-    from database_helpers import get_persons, set_suspicious_flag
+    from database_helpers import get_persons, get_suspicious_person_ids, set_suspicious_flag
 except ImportError:
     def get_persons(fallback: list[dict] | None = None) -> list[dict]:
         return fallback or []
+
+    def get_suspicious_person_ids(game_id: int) -> set[int]:
+        return set()
 
     def set_suspicious_flag(game_id: int, person_id: int, is_suspicious: bool) -> None:
         return None
@@ -242,7 +245,9 @@ def show_witness_overview() -> None:
         st.session_state.wo_selected = game_persons[0]["id"]
 
     if "wo_suspicious" not in st.session_state:
-        st.session_state.wo_suspicious = set()
+        st.session_state.wo_suspicious = get_suspicious_person_ids(
+            st.session_state.get("game_number", 0)
+        )
 
     if st.session_state.wo_selected not in game_person_ids:
         st.session_state.wo_selected = game_persons[0]["id"]

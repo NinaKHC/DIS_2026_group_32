@@ -37,8 +37,11 @@ except ImportError:
     _person_to_suspect = None
 
 try:
-    from database_helpers import save_arrest_guess
+    from database_helpers import get_suspicious_person_ids, save_arrest_guess
 except ImportError:
+    def get_suspicious_person_ids(game_id: int) -> set[int]:
+        return set()
+
     def save_arrest_guess(game_id: int, person_id: int, is_correct: bool) -> None:
         return None
 
@@ -74,6 +77,10 @@ _RIGHT = {
 def _get_arrest_candidates() -> list[dict]:
     selected_characters = get_selected_characters()
     suspicious_ids = set(st.session_state.get("wo_suspicious", set()))
+    if not suspicious_ids:
+        suspicious_ids = get_suspicious_person_ids(st.session_state.get("game_number", 0))
+        if suspicious_ids:
+            st.session_state.wo_suspicious = suspicious_ids
 
     if selected_characters and _person_to_suspect is not None:
         candidates = selected_characters

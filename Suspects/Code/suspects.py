@@ -45,7 +45,7 @@ from witness_button import (
     render_witness_search_button_streamlit,
 )
 from witness_overview import PERSONS
-from database_helpers import get_persons
+from database_helpers import get_persons, get_suspicious_person_ids
 
 PERSONS = get_persons(PERSONS)
 
@@ -194,7 +194,11 @@ SUSPECTS = [_person_to_suspect(person) for person in PERSONS]
 
 
 def get_marked_suspects() -> list[dict]:
-    suspicious_ids = st.session_state.get("wo_suspicious", set())
+    suspicious_ids = set(st.session_state.get("wo_suspicious", set()))
+    if not suspicious_ids:
+        suspicious_ids = get_suspicious_person_ids(st.session_state.get("game_number", 0))
+        if suspicious_ids:
+            st.session_state.wo_suspicious = suspicious_ids
 
     if not suspicious_ids:
         return [

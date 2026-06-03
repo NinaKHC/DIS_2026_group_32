@@ -566,6 +566,15 @@ UPSERT_SUSPICION_QUERY = text("""
 """)
 
 
+GET_SUSPICIOUS_IDS_QUERY = text("""
+    SELECT person_id
+    FROM Player_suspicion
+    WHERE game_id = :game_id
+      AND is_suspicious = TRUE
+    ORDER BY person_id
+""")
+
+
 UPSERT_ARREST_GUESS_QUERY = text("""
     INSERT INTO Arrest_guess (game_id, person_id, is_correct)
     VALUES (:game_id, :person_id, :is_correct)
@@ -624,6 +633,17 @@ def set_suspicious_flag(game_id: int, person_id: int, is_suspicious: bool) -> No
             })
     except Exception as error:
         _handle_database_error("save suspicious flag", error)
+
+
+def get_suspicious_person_ids(game_id: int) -> set[int]:
+    try:
+        ensure_game_tables()
+        with _engine().connect() as connection:
+            rows = connection.execute(GET_SUSPICIOUS_IDS_QUERY, {"game_id": game_id}).fetchall()
+        return {int(row[0]) for row in rows}
+    except Exception as error:
+        _handle_database_error("fetch suspicious flags", error)
+        return set()
 
 
 def reset_guilty_suspect_flags() -> None:
