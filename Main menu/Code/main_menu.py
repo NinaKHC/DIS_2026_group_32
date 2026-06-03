@@ -75,6 +75,12 @@ def image_to_base64(image_path: Path) -> str:
         return base64.b64encode(image_file.read()).decode()
 
 
+def get_image_aspect_ratio(image_path: Path) -> float:
+    with Image.open(image_path) as img:
+        image_width, image_height = img.size
+    return image_width / image_height
+
+
 def find_first_image(assets_dir: Path) -> Path:
     for image_path in sorted(assets_dir.iterdir()):
         if image_path.suffix.lower() in IMAGE_EXTENSIONS:
@@ -125,9 +131,7 @@ def show_main_menu() -> None:
     background_b64 = image_to_base64(background_path)
     menu_buttons_html = build_menu_buttons_html(assets_dir)
 
-    with Image.open(background_path) as img:
-        image_width, image_height = img.size
-    aspect_ratio = image_width / image_height
+    aspect_ratio = get_image_aspect_ratio(background_path)
 
     st.markdown(
         """
@@ -270,14 +274,30 @@ def show_main_menu() -> None:
         </div>
 
         <script>
+        let navigationPending = false;
         function navigate(page) {{
-            var buttons = window.parent.document.querySelectorAll('button');
-            for (var i = 0; i < buttons.length; i++) {{
-                if (buttons[i].innerText.trim() === page) {{
-                    buttons[i].click();
-                    return;
+            if (navigationPending) return;
+            navigationPending = true;
+
+            let attempts = 0;
+            const clickWhenReady = function() {{
+                attempts += 1;
+                var buttons = window.parent.document.querySelectorAll('button');
+                for (var i = 0; i < buttons.length; i++) {{
+                    if (buttons[i].innerText.trim() === page && !buttons[i].disabled) {{
+                        buttons[i].click();
+                        return;
+                    }}
                 }}
-            }}
+
+                if (attempts < 20) {{
+                    window.setTimeout(clickWhenReady, 75);
+                }} else {{
+                    navigationPending = false;
+                }}
+            }};
+
+            window.setTimeout(clickWhenReady, 120);
         }}
         </script>
     </body>
@@ -302,6 +322,5 @@ def show_main_menu() -> None:
                 st.rerun()
 
 
-# Bagudkompatibilitet
 def show_case_overview() -> None:
     show_main_menu()

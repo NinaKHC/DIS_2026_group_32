@@ -1,44 +1,19 @@
-"""
-Is_Suspect.py
-
-This file selects 1 guilty suspect from the 10 random characters.
-
-Expected use:
-    from Is_Suspect import setup_guilty_suspect, get_guilty_suspect, is_guilty_suspect
-
-    guilty = setup_guilty_suspect(selected_characters)
-
-The guilty suspect is stored in st.session_state so it does not change every time
-Streamlit reruns the page.
-"""
-
 from __future__ import annotations
 
 import random
+import math
 from typing import Any
 
 import streamlit as st
 
 
 GUILTY_SUSPECT_KEY = "guilty_suspect"
+UNTRUTHFUL_PERSON_IDS_KEY = "untruthful_person_ids"
 
 
 def setup_guilty_suspect(
     selected_characters: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """
-    Selects one guilty suspect from the selected random characters.
-
-    This function only selects a new guilty suspect if no guilty suspect already exists.
-    That means the guilty suspect stays the same while the game is running.
-
-    Args:
-        selected_characters:
-            The 10 random characters selected by Random_char_selector.py.
-
-    Returns:
-        The guilty suspect.
-    """
     if not selected_characters:
         raise ValueError("Cannot choose a guilty suspect because selected_characters is empty.")
 
@@ -58,21 +33,10 @@ def setup_guilty_suspect(
 
 
 def get_guilty_suspect() -> dict[str, Any] | None:
-    """
-    Returns the currently selected guilty suspect.
-
-    Returns None if setup_guilty_suspect has not been called yet.
-    """
     return st.session_state.get(GUILTY_SUSPECT_KEY)
 
 
 def is_guilty_suspect(character: dict[str, Any]) -> bool:
-    """
-    Checks whether a given character is the guilty suspect.
-
-    The comparison uses the character "id" if possible.
-    If there is no id, it falls back to comparing the whole dictionary.
-    """
     guilty_suspect = get_guilty_suspect()
 
     if guilty_suspect is None:
@@ -87,10 +51,36 @@ def is_guilty_suspect(character: dict[str, Any]) -> bool:
     return character == guilty_suspect
 
 
-def reset_guilty_suspect() -> None:
-    """
-    Removes the guilty suspect from session_state.
+def setup_untruthful_characters(
+    selected_characters: list[dict[str, Any]],
+    min_percent: float = 0.15,
+    max_percent: float = 0.20,
+) -> list[int]:
+    if not selected_characters:
+        return []
 
-    Call this when starting a new game.
-    """
+    min_count = max(1, math.ceil(len(selected_characters) * min_percent))
+    max_count = max(min_count, math.floor(len(selected_characters) * max_percent))
+
+    if UNTRUTHFUL_PERSON_IDS_KEY not in st.session_state:
+        count = random.randint(min_count, max_count)
+        selected = random.sample(selected_characters, count)
+        st.session_state[UNTRUTHFUL_PERSON_IDS_KEY] = [
+            character.get("id")
+            for character in selected
+            if character.get("id") is not None
+        ]
+
+    untruthful_ids = set(st.session_state[UNTRUTHFUL_PERSON_IDS_KEY])
+    for character in selected_characters:
+        character["truthfull"] = character.get("id") not in untruthful_ids
+
+    return list(st.session_state[UNTRUTHFUL_PERSON_IDS_KEY])
+
+
+def reset_untruthful_characters() -> None:
+    st.session_state.pop(UNTRUTHFUL_PERSON_IDS_KEY, None)
+
+
+def reset_guilty_suspect() -> None:
     st.session_state.pop(GUILTY_SUSPECT_KEY, None)

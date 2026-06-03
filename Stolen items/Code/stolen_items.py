@@ -1,123 +1,57 @@
-import base64
-import math
-import os
+﻿import math
 import sys
 from pathlib import Path
 
-from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
 
-try:
-    import psycopg2
-    from psycopg2 import sql
-except ImportError:
-    psycopg2 = None
+shared_code_dir = Path(__file__).resolve().parents[2] / "Shared" / "Code"
 
+if str(shared_code_dir) not in sys.path:
+    sys.path.append(str(shared_code_dir))
 
-project_root = Path(__file__).resolve().parents[2]
-back_button_code_dir = project_root / "Back to main menu" / "Code"
-screen_arrows_code_dir = project_root / "Screen arrows" / "Code"
+from path_helpers import add_code_paths, assets_dir, code_dir
 
-if str(back_button_code_dir) not in sys.path:
-    sys.path.append(str(back_button_code_dir))
-if str(screen_arrows_code_dir) not in sys.path:
-    sys.path.append(str(screen_arrows_code_dir))
+add_code_paths(
+    code_dir("Back to main menu"),
+    code_dir("Screen arrows"),
+    code_dir("Database"),
+)
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 from screen_arrows import screen_arrow_css, make_screen_arrow_button
+from database_helpers import get_stolen_items
+from ui_helpers import cached_image_to_base64, get_aspect_ratio, image_to_base64, navigate_script, streamlit_chrome_css
 
 
-ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
+ASSETS_DIR = assets_dir(__file__)
 
 
-# Side 1 (start page): titel dækker venstre øverste halvdel → 2 slots i bunden til venstre + 4 til højre = 6 slots
 START_PAGE_SLOTS = 6
 START_PAGE_BOXES = [
-    # Venstre side — under titelbanneret
-    ( 15.0, 41.0, 14.0, 38.0),   # Slot 0
-    ( 32.0, 39.0, 14.0, 38.0),   # Slot 1
-    # Højre side — 2×2 gitter
-    (50.0,  6.0, 16.0, 33.0),   # Slot 2
-    (68.0,  6.0, 16.0, 33.0),   # Slot 3
-    (51.0, 42.0, 16.0, 37.0),   # Slot 4
-    (69.0, 42.0, 16.0, 37.0),   # Slot 5
+    (15.0, 41.0, 14.0, 38.0),
+    (32.0, 39.0, 14.0, 38.0),
+    (50.0, 6.0, 16.0, 33.0),
+    (68.0, 6.0, 16.0, 33.0),
+    (51.0, 42.0, 16.0, 37.0),
+    (69.0, 42.0, 16.0, 37.0),
 ]
 
-# Side 2+ (new page): 8 slots i 2 rækker × 4 kolonner
 NEW_PAGE_SLOTS = 8
 NEW_PAGE_BOXES = [
-    ( 8.0,  4.5, 17.0, 33.0),   # Række 1, Kol 1
-    (27.0,  4.5, 17.0, 33.0),   # Række 1, Kol 2
-    (54.0,  4.5, 16.5, 33.0),   # Række 1, Kol 3
-    (73.0,  4.5, 16.5, 33.0),   # Række 1, Kol 4
-    ( 8.0, 47.0, 17.0, 38.0),   # Række 2, Kol 1
-    (27.0, 47.0, 17.0, 38.0),   # Række 2, Kol 2
-    (54.0, 47.0, 16.5, 38.0),   # Række 2, Kol 3
-    (73.0, 47.0, 16.5, 38.0),   # Række 2, Kol 4
+    (8.0, 4.5, 17.0, 33.0),
+    (27.0, 4.5, 17.0, 33.0),
+    (54.0, 4.5, 16.5, 33.0),
+    (73.0, 4.5, 16.5, 33.0),
+    (8.0, 47.0, 17.0, 38.0),
+    (27.0, 47.0, 17.0, 38.0),
+    (54.0, 47.0, 16.5, 38.0),
+    (73.0, 47.0, 16.5, 38.0),
 ]
 
 
-@st.cache_data
-def _get_stolen_items_from_db() -> list[dict]:
-    """Fetch 6 random stolen items from the database with their details."""
-    if not psycopg2:
-        return []
-    
-    try:
-        database_url = os.getenv(
-            "DATABASE_URL",
-            "postgresql://postgres:postgres@localhost:5432/streamlit_db"
-        )
-        conn = psycopg2.connect(database_url)
-        cur = conn.cursor()
-        
-        # Get 6 random stolen items
-        cur.execute("""
-            SELECT item_id, description, time_of_crime
-            FROM item_stolen
-            ORDER BY RANDOM()
-            LIMIT 6
-        """)
-        
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
-        
-        items = []
-        for item_id, description, time_of_crime in rows:
-            # Format time_of_crime (TIMESTAMP)
-            time_str = time_of_crime.strftime("%H:%M") if time_of_crime else "Unknown"
-            
-            items.append({
-                "item_id": item_id,
-                "description": description or "",
-                "time_stolen": time_str,
-                "image_filename": f"item{item_id}.png",
-            })
-        
-        return items
-    
-    except Exception as e:
-        st.error(f"Could not fetch items from database: {e}")
-        return []
-
-
-def image_to_base64(image_path: Path) -> str:
-    with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-
-@st.cache_data
-def cached_image_to_base64(image_path: Path) -> str:
-    """Cached version of image_to_base64 to avoid re-encoding images on every render."""
-    return image_to_base64(image_path)
-
-
-def get_aspect_ratio(image_path: Path) -> float:
-    with Image.open(image_path) as img:
-        w, h = img.size
-    return w / h
+def _get_stolen_items() -> list[dict]:
+    return get_stolen_items(limit=6)
 
 
 def _total_pages(num_items: int) -> int:
@@ -127,48 +61,13 @@ def _total_pages(num_items: int) -> int:
 
 
 def _items_on_page(page_index: int, all_items: list) -> list:
-    """Returnerer de genstande der vises på den givne albemside (0-indekseret)."""
     if page_index == 0:
         return all_items[:START_PAGE_SLOTS]
     start = START_PAGE_SLOTS + (page_index - 1) * NEW_PAGE_SLOTS
     return all_items[start : start + NEW_PAGE_SLOTS]
 
 
-def _streamlit_chrome_css() -> str:
-    return """
-        <style>
-        html, body, .stApp {
-            margin: 0 !important; padding: 0 !important;
-            overflow: hidden !important; background: #3a2010 !important;
-        }
-        [data-testid="stHeader"] { background: rgba(0,0,0,0) !important; height: 0rem !important; }
-        [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
-        .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; height: 100vh !important; overflow: hidden !important; }
-        section.main, div[data-testid="stAppViewContainer"], div[data-testid="stVerticalBlock"] { overflow: hidden !important; }
-        iframe { width: 100vw !important; height: 100vh !important; display: block !important; border: none !important; }
-        .element-container:has(iframe) { width: 100vw !important; height: 100vh !important; overflow: hidden !important; }
-        </style>
-    """
-
-
-def _navigate_js() -> str:
-    return """
-    <script>
-    function navigate(page) {
-        var buttons = window.parent.document.querySelectorAll('button');
-        for (var i = 0; i < buttons.length; i++) {
-            if (buttons[i].innerText.trim() === page) {
-                buttons[i].click();
-                return;
-            }
-        }
-    }
-    </script>
-    """
-
-
 def _build_slots_html(page_items: list, boxes: list) -> str:
-    """Laver HTML for alle billedslots på en albumside."""
     html = ""
     for slot_index, (left, top, width, height) in enumerate(boxes):
         if slot_index >= len(page_items):
@@ -210,7 +109,7 @@ def _render_page(
     bg_path = ASSETS_DIR / bg_filename
 
     if not bg_path.exists():
-        st.error(f"Baggrundsbillede ikke fundet: {bg_path}")
+        st.error(f"Background image not found: {bg_path}")
         st.stop()
 
     bg_b64 = image_to_base64(bg_path)
@@ -225,17 +124,17 @@ def _render_page(
         direction="left",
         onclick="navigate('prev')",
         css_class="si-arrow-left",
-        aria_label="Forrige side",
+        aria_label="Previous page",
     ) if show_left else ""
 
     right_arrow = make_screen_arrow_button(
         direction="right",
         onclick="navigate('next')",
         css_class="si-arrow-right",
-        aria_label="Næste side",
+        aria_label="Next page",
     ) if show_right else ""
 
-    counter_text = f"Side {page_index + 1} / {total_pages}"
+    counter_text = f"Page {page_index + 1} / {total_pages}"
 
     html = f"""
     <!DOCTYPE html>
@@ -342,8 +241,8 @@ def _render_page(
     </head>
     <body>
         <div class="si-page">
-            {back_btn_html}
             <div class="si-stage">
+                {back_btn_html}
                 <img class="si-bg" src="data:image/png;base64,{bg_b64}" alt="Stolen items album">
                 {slots_html}
                 {left_arrow}
@@ -351,7 +250,7 @@ def _render_page(
                 <div class="si-counter">{counter_text}</div>
             </div>
         </div>
-        {_navigate_js()}
+        {navigate_script()}
     </body>
     </html>
     """
@@ -363,8 +262,7 @@ def show_stolen_items() -> None:
     if "si_page" not in st.session_state:
         st.session_state.si_page = 0
 
-    # Get 6 random stolen items from database
-    all_items = _get_stolen_items_from_db()
+    all_items = _get_stolen_items()
     
     num_items = len(all_items)
     total_pages = _total_pages(num_items)
@@ -376,7 +274,7 @@ def show_stolen_items() -> None:
     back_btn_html = get_back_button_html(btn_key="si_back")
     back_btn_css = get_back_button_css(left="1.2%", top="2.0%", width="13%")
 
-    st.markdown(_streamlit_chrome_css(), unsafe_allow_html=True)
+    st.markdown(streamlit_chrome_css("#3a2010"), unsafe_allow_html=True)
 
     _render_page(back_btn_html, back_btn_css, current_page, total_pages, page_items)
 

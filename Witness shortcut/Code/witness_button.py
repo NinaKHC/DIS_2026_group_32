@@ -185,6 +185,16 @@ def get_witness_static_button_html(
     """
 
 
+def get_witness_search_button_html(
+    btn_key: str = "wb_witness_search",
+    css_class: str = "witness-green-tab",
+    label: str = "Witness Search",
+) -> str:
+    return f"""
+    <div class="{css_class}" onclick="navigate('{btn_key}')" role="button" aria-label="{label}"></div>
+    """
+
+
 def get_witness_red_button_html(
     btn_key: str = "wb_suspects",
     css_class: str = "witness-red-tab",
@@ -225,6 +235,18 @@ def render_witness_red_button_streamlit(
 ) -> None:
     """
     Hidden Streamlit button used by the red Suspects tab.
+    """
+    if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
+        st.session_state["page"] = target_page
+        st.rerun()
+
+
+def render_witness_search_button_streamlit(
+    btn_key: str = "wb_witness_search",
+    target_page: str = "witness_search",
+) -> None:
+    """
+    Hidden Streamlit button used by the green Witness Search tab.
     """
     if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
         st.session_state["page"] = target_page

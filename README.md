@@ -1,4 +1,4 @@
-# Streamlit + PostgreSQL Docker Setup
+﻿# Streamlit + PostgreSQL Docker Setup
 
 This project uses Docker and Docker Compose to run a Streamlit application with a PostgreSQL database.
 
@@ -11,13 +11,13 @@ This project uses Docker and Docker Compose to run a Streamlit application with 
 
 ```
 .
-├── Dockerfile              # Container image for Streamlit app
-├── docker-compose.yml      # Orchestrates Streamlit + PostgreSQL
-├── .env.example            # Example environment variables
-├── .dockerignore           # Files to exclude from Docker build
-├── requirements.txt        # Python dependencies
-├── app.py                  # Main Streamlit application
-└── README.md              # This file
+|-- Dockerfile              # Container image for Streamlit app
+|-- docker-compose.yml      # Orchestrates Streamlit + PostgreSQL
+|-- .env.example            # Example environment variables
+|-- .dockerignore           # Files to exclude from Docker build
+|-- requirements.txt        # Python dependencies
+|-- app.py                  # Main Streamlit application
+`-- README.md               # This file
 ```
 
 ## Setup Instructions

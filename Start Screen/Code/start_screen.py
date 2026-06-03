@@ -4,6 +4,7 @@ from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
+from PIL import Image
 
 
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
@@ -27,6 +28,12 @@ def image_to_base64(image_path: Path) -> str:
         return base64.b64encode(image_file.read()).decode()
 
 
+def get_aspect_ratio(image_path: Path) -> float:
+    with Image.open(image_path) as image:
+        width, height = image.size
+    return width / height
+
+
 def find_first_image(assets_dir: Path) -> Path:
     for image_path in sorted(assets_dir.iterdir()):
         if image_path.suffix.lower() in IMAGE_EXTENSIONS:
@@ -45,6 +52,7 @@ def show_start_screen() -> None:
         st.stop()
 
     background_b64 = image_to_base64(background_path)
+    aspect_ratio = get_aspect_ratio(background_path)
 
     st.markdown(
         """
@@ -112,11 +120,29 @@ def show_start_screen() -> None:
         .ss-page {{
             width: 100vw;
             height: 100vh;
-            background-image: url("data:image/png;base64,{background_b64}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1c0f08;
+            overflow: hidden;
+        }}
+
+        .ss-stage {{
             position: relative;
+            width: min(100vw, calc(100vh * {aspect_ratio}));
+            aspect-ratio: {aspect_ratio};
+            overflow: hidden;
+        }}
+
+        .ss-bg {{
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 1;
+            pointer-events: none;
+            user-select: none;
         }}
 
         .ss-title {{
@@ -129,12 +155,15 @@ def show_start_screen() -> None:
             margin: 0;
             font-family: Georgia, serif;
             user-select: none;
+            position: relative;
+            z-index: 2;
         }}
 
         .menu-click-zone {{
             position: absolute;
             cursor: pointer;
             background: transparent;
+            z-index: 3;
         }}
 
         .menu-click-zone::after {{
@@ -179,31 +208,50 @@ def show_start_screen() -> None:
     </head>
     <body>
         <div class="ss-page">
-            <div class="ss-title">JEWEL HEIST DATABASE</div>
+            <div class="ss-stage">
+                <img class="ss-bg" src="data:image/png;base64,{background_b64}" alt="Start screen">
+                <div class="ss-title">JEWEL HEIST DATABASE</div>
 
-            <div
-                class="menu-click-zone start-zone"
-                onclick="navigate('ss_start_game')"
-                role="button"
-                aria-label="Start">
-            </div>
-            <div
-                class="menu-click-zone exit-zone"
-                onclick="navigate('ss_exit')"
-                role="button"
-                aria-label="Exit">
+                <div
+                    class="menu-click-zone start-zone"
+                    onclick="navigate('ss_start_game')"
+                    role="button"
+                    aria-label="Start">
+                </div>
+                <div
+                    class="menu-click-zone exit-zone"
+                    onclick="navigate('ss_exit')"
+                    role="button"
+                    aria-label="Exit">
+                </div>
             </div>
         </div>
 
         <script>
+        let navigationPending = false;
         function navigate(page) {{
-            var buttons = window.parent.document.querySelectorAll('button');
-            for (var i = 0; i < buttons.length; i++) {{
-                if (buttons[i].innerText.trim() === page) {{
-                    buttons[i].click();
-                    return;
+            if (navigationPending) return;
+            navigationPending = true;
+
+            let attempts = 0;
+            const clickWhenReady = function() {{
+                attempts += 1;
+                var buttons = window.parent.document.querySelectorAll('button');
+                for (var i = 0; i < buttons.length; i++) {{
+                    if (buttons[i].innerText.trim() === page && !buttons[i].disabled) {{
+                        buttons[i].click();
+                        return;
+                    }}
                 }}
-            }}
+
+                if (attempts < 20) {{
+                    window.setTimeout(clickWhenReady, 75);
+                }} else {{
+                    navigationPending = false;
+                }}
+            }};
+
+            window.setTimeout(clickWhenReady, 120);
         }}
         </script>
     </body>

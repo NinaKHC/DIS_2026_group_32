@@ -1,4 +1,4 @@
-import base64
+﻿import base64
 import html
 import sys
 from pathlib import Path
@@ -23,8 +23,6 @@ if str(witness_button_code_dir) in sys.path:
     sys.path.remove(str(witness_button_code_dir))
 sys.path.insert(0, str(witness_button_code_dir))
 
-# Streamlit keeps imported modules alive between reruns. Force this helper to
-# reload from the shared Witness shortcut folder after it was moved there.
 sys.modules.pop("witness_button", None)
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
@@ -38,21 +36,21 @@ from witness_button import (
     get_witness_overview_button_html,
     get_witness_red_button_css,
     get_witness_red_button_html,
-    get_witness_static_button_html,
+    get_witness_search_button_html,
     render_witness_file_button_streamlit,
     render_witness_overview_button_streamlit,
     render_witness_red_button_streamlit,
+    render_witness_search_button_streamlit,
 )
-from witness_overview import PERSONS, get_witness_statement
+from witness_overview import get_current_game_persons, get_witness_statement
 
 
-IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 CHARS_DIR = project_root / "Characters"
+BACKGROUND_FILENAME = "Witness file.png"
 
 
 
 def _character_photo_path(person_id: int) -> str | None:
-    # Use the same image as suspects.py. No Char_zoom_ version here.
     standard_path = CHARS_DIR / f"Char_{person_id}.png"
 
     if standard_path.exists():
@@ -236,8 +234,7 @@ def _person_to_witness(person: dict) -> dict:
 
 
 def get_witnesses() -> list[dict]:
-    # Unlike Suspect File, this page always shows all characters.
-    return [_person_to_witness(person) for person in PERSONS]
+    return [_person_to_witness(person) for person in get_current_game_persons()]
 
 
 def image_to_base64(image_path: Path) -> str:
@@ -249,13 +246,6 @@ def image_to_base64(image_path: Path) -> str:
 def cached_image_to_base64(image_path: Path) -> str:
     """Cached version of image_to_base64 to avoid re-encoding images on every render."""
     return image_to_base64(image_path)
-
-
-def find_background_image(assets_dir: Path) -> Path:
-    for file_path in sorted(assets_dir.iterdir()):
-        if file_path.is_file() and file_path.suffix.lower() in IMAGE_EXTENSIONS:
-            return file_path
-    raise FileNotFoundError(f"No background image found in: {assets_dir}")
 
 
 def show_witnesses() -> None:
@@ -282,9 +272,10 @@ def show_witnesses() -> None:
         top="11.6%",
         selected=False,
     )
-    witness_green_tab_html = get_witness_static_button_html(
+    witness_green_tab_html = get_witness_search_button_html(
+        btn_key="wf_tab_search",
         css_class="witness-green-tab",
-        label="Witness shortcut green",
+        label="Witness Search",
     )
     witness_green_tab_css = get_witness_green_button_css(
         css_class="witness-green-tab",
@@ -295,10 +286,9 @@ def show_witnesses() -> None:
     feature_dir = Path(__file__).resolve().parents[1]
     assets_dir = feature_dir / "Assets"
 
-    try:
-        background_path = find_background_image(assets_dir)
-    except FileNotFoundError as error:
-        st.error(str(error))
+    background_path = assets_dir / BACKGROUND_FILENAME
+    if not background_path.exists():
+        st.error(f"Background image not found: {background_path}")
         st.stop()
 
     background_b64 = cached_image_to_base64(background_path)
@@ -435,7 +425,6 @@ def show_witnesses() -> None:
             pointer-events: none;
         }}
 
-        /* Same placement as suspects.py */
         .witness-photo {{
             position: absolute;
             left: 19.9%;
@@ -447,7 +436,6 @@ def show_witnesses() -> None:
             pointer-events: none;
         }}
 
-        /* Same field layout as suspects.py */
         .witness-fields {{
             position: absolute;
             left: 52.0%;
@@ -546,7 +534,6 @@ def show_witnesses() -> None:
             white-space: normal;
         }}
 
-        /* Manual spacing hooks for every Witness File field. */
         .wf-full-name-entry {{
             margin-bottom: 0.8%;
         }}
@@ -702,8 +689,8 @@ def show_witnesses() -> None:
     </head>
     <body>
         <div class="witness-page">
-            {back_btn_html}
             <div class="witness-stage">
+                {back_btn_html}
 
                 <img
                     class="witness-bg"
@@ -734,14 +721,30 @@ def show_witnesses() -> None:
         </div>
 
         <script>
+        let navigationPending = false;
         function navigate(direction) {{
-            const buttons = window.parent.document.querySelectorAll('button');
-            for (const btn of buttons) {{
-                if (btn.innerText.trim() === direction) {{
-                    btn.click();
-                    return;
+            if (navigationPending) return;
+            navigationPending = true;
+
+            let attempts = 0;
+            const clickWhenReady = function() {{
+                attempts += 1;
+                const buttons = window.parent.document.querySelectorAll('button');
+                for (const btn of buttons) {{
+                    if (btn.innerText.trim() === direction && !btn.disabled) {{
+                        btn.click();
+                        return;
+                    }}
                 }}
-            }}
+
+                if (attempts < 20) {{
+                    window.setTimeout(clickWhenReady, 75);
+                }} else {{
+                    navigationPending = false;
+                }}
+            }};
+
+            window.setTimeout(clickWhenReady, 120);
         }}
         </script>
     </body>
@@ -754,6 +757,7 @@ def show_witnesses() -> None:
     render_witness_overview_button_streamlit(btn_key="wf_tab_overview", target_page="witnesses")
     render_witness_file_button_streamlit(btn_key="wf_tab_file", target_page="witness_file")
     render_witness_red_button_streamlit(btn_key="wf_tab_suspects", target_page="suspects")
+    render_witness_search_button_streamlit(btn_key="wf_tab_search", target_page="witness_search")
 
     col_prev, col_next = st.columns(2)
     with col_prev:
@@ -774,4 +778,3 @@ def show_witnesses() -> None:
 
 def show_witness_file() -> None:
     show_witnesses()
-

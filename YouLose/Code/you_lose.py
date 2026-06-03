@@ -1,4 +1,4 @@
-import base64
+﻿import base64
 import sys
 from pathlib import Path
 
@@ -18,13 +18,12 @@ from back_to_main_menu import get_back_button_css, get_back_button_html, render_
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
 
-# Billed-layout (% af billedets dimensioner) — juster hvis tekst/foto ikke rammer
-PHOTO_LEFT  = 33.5
-PHOTO_TOP   =  9.5
-PHOTO_WIDTH = 28.5
-PHOTO_HEIGHT= 51.0
+PHOTO_LEFT  = 39.8
+PHOTO_TOP   = 27.2
+PHOTO_WIDTH = 20.0
+PHOTO_HEIGHT= 35.7
 
-NAME_LEFT   = 22.5
+NAME_LEFT   = 26.5
 NAME_TOP    = 73.5
 NAME_WIDTH  = 37.0
 NAME_HEIGHT =  9.0
@@ -50,13 +49,12 @@ def _aspect(path: Path) -> float:
 def show_you_lose() -> None:
     bg_path = ASSETS_DIR / "Youlost.png"
     if not bg_path.exists():
-        st.error(f"Billede ikke fundet: {bg_path}")
+        st.error(f"Image not found: {bg_path}")
         st.stop()
 
     bg_b64  = _cached_b64(bg_path)
     aspect  = _aspect(bg_path)
 
-    # Vis den RIGTIGE skyldige (ikke den forkert anholdte)
     guilty_name  = st.session_state.get("result_guilty_name",  "")
     guilty_photo = st.session_state.get("result_guilty_photo", None)
 
@@ -76,7 +74,7 @@ def show_you_lose() -> None:
         f"width:{NAME_WIDTH}%;height:{NAME_HEIGHT}%;"
         "display:flex;align-items:center;justify-content:center;"
         "z-index:10;pointer-events:none;"
-        "font-family:Georgia,serif;font-size:clamp(11px,1.3vw,22px);"
+        "font-family:Georgia,serif;font-size:clamp(17px,1.95vw,33px);"
         "font-weight:bold;color:#2a1a0a;text-align:center;"
         "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
     )
@@ -110,19 +108,38 @@ def show_you_lose() -> None:
     </style></head>
     <body>
     <div class="yl-page">
-        {back_btn_html}
         <div class="yl-stage">
+            {back_btn_html}
             <img class="yl-bg" src="data:image/png;base64,{bg_b64}" alt="You Lose">
             {photo_html}
             <div style="{name_style}">{guilty_name}</div>
         </div>
     </div>
     <script>
+    let navigationPending = false;
     function navigate(page) {{
-        var btns = window.parent.document.querySelectorAll('button');
-        for (var i = 0; i < btns.length; i++) {{
-            if (btns[i].innerText.trim() === page) {{ btns[i].click(); return; }}
-        }}
+        if (navigationPending) return;
+        navigationPending = true;
+
+        let attempts = 0;
+        const clickWhenReady = function() {{
+            attempts += 1;
+            var btns = window.parent.document.querySelectorAll('button');
+            for (var i = 0; i < btns.length; i++) {{
+                if (btns[i].innerText.trim() === page && !btns[i].disabled) {{
+                    btns[i].click();
+                    return;
+                }}
+            }}
+
+            if (attempts < 20) {{
+                window.setTimeout(clickWhenReady, 75);
+            }} else {{
+                navigationPending = false;
+            }}
+        }};
+
+        window.setTimeout(clickWhenReady, 120);
     }}
     </script>
     </body></html>

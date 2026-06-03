@@ -8,26 +8,18 @@ def image_to_base64(image_path: Path) -> str:
 
 
 def get_arrow_image_base64(direction: str) -> str:
-    """
-    Returnerer base64 for venstre eller højre pil.
-
-    direction skal være:
-    - "left"
-    - "right"
-    """
-
     direction = direction.lower().strip()
 
-    feature_dir = Path(__file__).resolve().parents[1]
-    assets_dir = feature_dir / "Assets"
+    assets_dir = Path(__file__).resolve().parents[1] / "Assets"
+    image_paths = {
+        "left": assets_dir / "Left_Arrow.png",
+        "right": assets_dir / "Right_Arrow.png",
+    }
 
-    if direction == "left":
-        image_path = assets_dir / "Left_Arrow.png"
-    elif direction == "right":
-        image_path = assets_dir / "Right_Arrow.png"
-    else:
+    if direction not in image_paths:
         raise ValueError("direction must be 'left' or 'right'")
 
+    image_path = image_paths[direction]
     if not image_path.exists():
         raise FileNotFoundError(f"Arrow image not found: {image_path}")
 
@@ -35,11 +27,6 @@ def get_arrow_image_base64(direction: str) -> str:
 
 
 def screen_arrow_css() -> str:
-    """
-    CSS til pileknapperne.
-    Selve siden bestemmer position via ekstra CSS-klasser.
-    """
-
     return """
     .screen-arrow-button {
         position: absolute;
@@ -76,23 +63,6 @@ def make_screen_arrow_button(
     css_class: str,
     aria_label: str,
 ) -> str:
-    """
-    Laver HTML for én pil.
-
-    direction:
-        "left" eller "right"
-
-    onclick:
-        JavaScript-funktion, fx "navigate('prev')"
-
-    css_class:
-        Ekstra CSS-klasse, fx "crime-scene-arrow-left"
-
-    aria_label:
-        Tekst til accessibility.
-    """
-
-    direction = direction.lower().strip()
     encoded_image = get_arrow_image_base64(direction)
 
     return f"""

@@ -1,29 +1,34 @@
-import base64
 import sys
 from pathlib import Path
 
-from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
 
 
-project_root = Path(__file__).resolve().parents[2]
-back_button_code_dir = project_root / "Back to main menu" / "Code"
-char_randomizer_code_dir = project_root / "Char Randomizer" / "Code"
-suspect_selecter_code_dir = project_root / "Suspect selecter" / "Code"
+shared_code_dir = Path(__file__).resolve().parents[2] / "Shared" / "Code"
+if str(shared_code_dir) not in sys.path:
+    sys.path.append(str(shared_code_dir))
 
-if str(back_button_code_dir) not in sys.path:
-    sys.path.append(str(back_button_code_dir))
-if str(char_randomizer_code_dir) not in sys.path:
-    sys.path.append(str(char_randomizer_code_dir))
-if str(suspect_selecter_code_dir) not in sys.path:
-    sys.path.append(str(suspect_selecter_code_dir))
+from path_helpers import PROJECT_ROOT, add_code_paths, assets_dir, code_dir
+from ui_helpers import (
+    cached_image_to_base64,
+    get_aspect_ratio,
+    robust_navigation_script,
+    streamlit_chrome_css,
+)
+
+
+add_code_paths(
+    code_dir("Back to main menu"),
+    code_dir("Char Randomizer"),
+    code_dir("Suspect selecter"),
+    code_dir("Database"),
+)
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 
-# Hent mistænkte fra suspects.py (samme liste bruges begge steder)
 try:
-    suspects_dir = project_root / "Suspects" / "Code"
+    suspects_dir = code_dir("Suspects")
     if str(suspects_dir) not in sys.path:
         sys.path.append(str(suspects_dir))
     from suspects import SUSPECTS, _person_to_suspect
@@ -32,59 +37,38 @@ except ImportError:
     _person_to_suspect = None
 
 try:
+    from database_helpers import save_arrest_guess
+except ImportError:
+    def save_arrest_guess(game_id: int, person_id: int, is_correct: bool) -> None:
+        return None
+
+try:
     from Random_char_selector import get_selected_characters
 except ImportError:
     def get_selected_characters() -> list[dict]:
         return []
 
 try:
-    from Is_Suspect import get_guilty_suspect, is_guilty_suspect
+    from Is_Suspect import get_guilty_suspect
 except ImportError:
     def get_guilty_suspect() -> dict | None:
         return None
 
-    def is_guilty_suspect(character: dict) -> bool:
-        return bool(character.get("is_suspect"))
+ASSETS_DIR = assets_dir(__file__)
+CHARS_DIR = PROJECT_ROOT / "Characters"
 
-ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
-CHARS_DIR = project_root / "Characters"
-
-# Sæt dette til den skyldiges full_name for at aktivere rigtigt/forkert feedback.
-# Lad feltet være tomt ("") for at springe over.
-CORRECT_SUSPECT: str = ""
-
-# ── Kort-layout (% af billedets bredde/højde) ────────────────────────────────
-# Juster x_val og y_* hvis teksten ikke lander på de rigtige linjer.
 _LEFT = {
-    "photo_left": 19.0, "photo_top": 15.0, "photo_w": 24.0, "photo_h": 34.0,
-    "click_x": 15.5, "click_y": 13.0, "click_w": 33.0, "click_h": 76.0,
+    "photo_left": 25.0, "photo_top": 20.0, "photo_w": 24.0, "photo_h": 34.0,
+    "click_x": 26.5, "click_y": 21.0, "click_w": 22.0, "click_h": 60.0,
     "x_val": 32.5,
     "y_name": 55.5, "y_occ": 59.0, "y_age": 62.0, "y_feat": 69.0, "y_alibi": 72.0,
 }
 _RIGHT = {
-    "photo_left": 55.0, "photo_top": 15.0, "photo_w": 24.0, "photo_h": 34.0,
-    "click_x": 51.5, "click_y": 13.0, "click_w": 33.0, "click_h": 76.0,
+    "photo_left": 50.0, "photo_top": 20.0, "photo_w": 24.0, "photo_h": 34.0,
+    "click_x": 51.5, "click_y": 21.0, "click_w": 22.0, "click_h": 60.0,
     "x_val": 58.5,
     "y_name": 55.5, "y_occ": 59.0, "y_age": 62.0, "y_feat": 69.0, "y_alibi": 72.0,
 }
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def _b64(path: Path) -> str:
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-
-@st.cache_data
-def _cached_b64(path: Path) -> str:
-    """Cached version of _b64 to avoid re-encoding images on every render."""
-    return _b64(path)
-
-
-def _aspect(path: Path) -> float:
-    with Image.open(path) as img:
-        w, h = img.size
-    return w / h
 
 
 def _get_arrest_candidates() -> list[dict]:
@@ -142,9 +126,6 @@ def _is_correct_arrest(arrested: dict) -> bool:
             return arrested_id == guilty_id
         return arrested.get("full_name") == guilty.get("name")
 
-    if CORRECT_SUSPECT:
-        return arrested.get("full_name") == CORRECT_SUSPECT
-
     return bool(arrested.get("is_suspect"))
 
 
@@ -164,15 +145,6 @@ def _get_guilty_result(candidates: list[dict], arrested: dict) -> tuple[str, str
             return matching_candidate.get("full_name", ""), matching_candidate.get("photo")
         return guilty.get("name", ""), _arrest_photo_path(guilty_id, guilty.get("photo"))
 
-    if CORRECT_SUSPECT:
-        matching_candidate = next(
-            (candidate for candidate in candidates if candidate.get("full_name") == CORRECT_SUSPECT),
-            None,
-        )
-        if matching_candidate:
-            return matching_candidate.get("full_name", ""), matching_candidate.get("photo")
-        return CORRECT_SUSPECT, None
-
     return arrested.get("full_name", ""), arrested.get("photo")
 
 
@@ -188,7 +160,7 @@ def _card_html(suspect: dict | None, cfg: dict) -> str:
                 f'<img style="position:absolute;left:{cfg["photo_left"]}%;top:{cfg["photo_top"]}%;'
                 f'width:{cfg["photo_w"]}%;height:{cfg["photo_h"]}%;'
                 f'object-fit:contain;z-index:8;pointer-events:none;"'
-                f' src="data:image/png;base64,{_cached_b64(p)}" alt="photo">'
+                f' src="data:image/png;base64,{cached_image_to_base64(p)}" alt="photo">'
             )
 
     s = (
@@ -205,35 +177,6 @@ def _card_html(suspect: dict | None, cfg: dict) -> str:
         + f'<span style="{s}left:{x}%;top:{cfg["y_feat"]}%;max-width:17%;">{suspect.get("distinguishing_features","")}</span>'
         + f'<span style="{s}left:{x}%;top:{cfg["y_alibi"]}%;max-width:17%;">{suspect.get("alibi","")}</span>'
     )
-
-
-def _streamlit_css() -> str:
-    return """
-        <style>
-        html, body, .stApp {
-            margin:0!important;padding:0!important;overflow:hidden!important;background:#1a0a04!important;
-        }
-        [data-testid="stHeader"]{background:rgba(0,0,0,0)!important;height:0rem!important;}
-        [data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important;}
-        .block-container{padding:0!important;margin:0!important;max-width:100%!important;height:100vh!important;overflow:hidden!important;}
-        section.main,div[data-testid="stAppViewContainer"],div[data-testid="stVerticalBlock"]{overflow:hidden!important;}
-        iframe{width:100vw!important;height:100vh!important;display:block!important;border:none!important;}
-        .element-container:has(iframe){width:100vw!important;height:100vh!important;overflow:hidden!important;}
-        </style>
-    """
-
-
-def _navigate_js() -> str:
-    return """
-    <script>
-    function navigate(page) {
-        var btns = window.parent.document.querySelectorAll('button');
-        for (var i = 0; i < btns.length; i++) {
-            if (btns[i].innerText.trim() === page) { btns[i].click(); return; }
-        }
-    }
-    </script>
-    """
 
 
 def _render_select(
@@ -258,7 +201,6 @@ def _render_select(
     left_name  = left_suspect.get("full_name", "")  if left_suspect  else ""
     right_name = right_suspect.get("full_name", "") if right_suspect else ""
 
-    # Dimmed overlay on arrows when at edges
     hide_left_arrow  = "ar-arrow-disabled" if view_start == 0            else ""
     hide_right_arrow = "ar-arrow-disabled" if view_start >= total - 1    else ""
 
@@ -272,7 +214,7 @@ def _render_select(
             f'style="left:{_RIGHT["click_x"]}%;top:{_RIGHT["click_y"]}%;'
             f'width:{_RIGHT["click_w"]}%;height:{_RIGHT["click_h"]}%;" '
             f"""onclick="navigate('ar_select_{right_index}')" """
-            f'role="button" aria-label="Vælg {right_name}"></div>'
+            f'role="button" aria-label="Select {right_name}"></div>'
         )
 
     html = f"""
@@ -304,7 +246,6 @@ def _render_select(
     .ar-confirm-active:hover{{filter:brightness(1.18);}}
     .ar-confirm-inactive{{opacity:0.45;cursor:not-allowed;}}
 
-    /* JS confirmation overlay */
     #ar-overlay{{
         display:none;position:absolute;inset:0;z-index:100;
         background:rgba(0,0,0,0.75);
@@ -336,61 +277,48 @@ def _render_select(
     </style></head>
     <body>
     <div class="ar-page">
-        {back_btn_html}
         <div class="ar-stage">
+            {back_btn_html}
             <img class="ar-bg" src="data:image/png;base64,{bg_b64}" alt="Arrest screen">
 
             {left_html}
             {right_html}
 
-            <!-- Card click zones -->
             <div class="ar-card-zone {left_selected}"
                  style="left:{_LEFT['click_x']}%;top:{_LEFT['click_y']}%;width:{_LEFT['click_w']}%;height:{_LEFT['click_h']}%;"
                  onclick="navigate('ar_select_{view_start}')"
-                 role="button" aria-label="Vælg {left_name}"></div>
+                 role="button" aria-label="Select {left_name}"></div>
 
             {right_card_zone}
 
-            <!-- Left arrow click zone -->
             <div class="ar-arrow-zone {hide_left_arrow}"
                  style="left:8%;top:38%;width:8%;height:22%;"
                  onclick="navigate('ar_left')"
-                 aria-label="Forrige mistænkt"></div>
+                 aria-label="Previous suspect"></div>
 
-            <!-- Right arrow click zone -->
             <div class="ar-arrow-zone {hide_right_arrow}"
                  style="right:8%;top:38%;width:8%;height:22%;"
                  onclick="navigate('ar_right')"
-                 aria-label="Næste mistænkt"></div>
+                 aria-label="Next suspect"></div>
 
-            <!-- CONFIRM ARREST click zone -->
             <div class="ar-confirm-zone {confirm_active}"
                  style="left:29%;top:88%;width:42%;height:10%;"
                  onclick="tryConfirm()"
-                 aria-label="Bekræft anholdelse"></div>
+                 aria-label="Confirm arrest"></div>
 
-            <!-- Confirmation dialog overlay -->
             <div id="ar-overlay" style="display:none;position:absolute;inset:0;z-index:100;background:rgba(0,0,0,0.75);justify-content:center;align-items:center;">
                 <div class="ar-dialog">
-                    <p>Er du sikker på at du vil anholde<br><strong>{selected_name}</strong>?</p>
-                    <button class="ar-btn ar-btn-yes" onclick="doConfirm()">Ja, anholdelse</button>
-                    <button class="ar-btn ar-btn-no"  onclick="cancelConfirm()">Annuller</button>
+                    <p>Are you sure you want to arrest<br><strong>{selected_name}</strong>?</p>
+                    <button class="ar-btn ar-btn-yes" onclick="doConfirm()">Confirm arrest</button>
+                    <button class="ar-btn ar-btn-no"  onclick="cancelConfirm()">Cancel</button>
                 </div>
             </div>
         </div>
     </div>
 
+    {robust_navigation_script()}
     <script>
-    function navigate(page) {{
-        var btns = window.parent.document.querySelectorAll('button');
-        for (var i = 0; i < btns.length; i++) {{
-            if (btns[i].innerText.trim() === page) {{ btns[i].click(); return; }}
-        }}
-    }}
     function tryConfirm() {{
-        if ({str(selected_index)}) {{
-            // Show overlay only if something is selected (selected_index >= 0)
-        }}
         if ({str(selected_index)} < 0) return;
         document.getElementById('ar-overlay').style.display = 'flex';
     }}
@@ -410,16 +338,16 @@ def _render_select(
 def show_arrest_suspect() -> None:
     bg_path = ASSETS_DIR / "Arrest person screen.png"
     if not bg_path.exists():
-        st.error(f"Baggrundsbillede ikke fundet: {bg_path}")
+        st.error(f"Background image not found: {bg_path}")
         st.stop()
 
-    bg_b64 = _cached_b64(bg_path)
-    aspect  = _aspect(bg_path)
+    bg_b64 = cached_image_to_base64(bg_path)
+    aspect = get_aspect_ratio(bg_path)
 
     suspects = _get_arrest_candidates()
     if not suspects:
-        st.markdown(_streamlit_css(), unsafe_allow_html=True)
-        st.error("Ingen mistænkte er tilføjet endnu. Udfyld SUSPECTS i Suspects/Code/suspects.py.")
+        st.markdown(streamlit_chrome_css(background="#1a0a04"), unsafe_allow_html=True)
+        st.error("No suspects have been added yet. Fill in SUSPECTS in Suspects/Code/suspects.py.")
         return
 
     total = len(suspects)
@@ -437,10 +365,8 @@ def show_arrest_suspect() -> None:
     back_btn_html = get_back_button_html(btn_key="ar_back")
     back_btn_css  = get_back_button_css(left="1.0%", top="1.5%", width="10%")
 
-    st.markdown(_streamlit_css(), unsafe_allow_html=True)
+    st.markdown(streamlit_chrome_css(background="#1a0a04"), unsafe_allow_html=True)
     _render_select(suspects, bg_b64, aspect, view_start, selected, back_btn_html, back_btn_css)
-
-    # ── Skjulte Streamlit-navigationknapper ──────────────────────────────────
 
     render_back_button_streamlit(btn_key="ar_back", target_page="main_menu")
 
@@ -458,6 +384,14 @@ def show_arrest_suspect() -> None:
 
         is_correct = _is_correct_arrest(arrested)
         guilty_name, guilty_photo = _get_guilty_result(suspects, arrested)
+        arrested_id = arrested.get("id")
+
+        if arrested_id is not None:
+            save_arrest_guess(
+                st.session_state.get("game_number", 0),
+                int(arrested_id),
+                is_correct,
+            )
 
         st.session_state["result_is_correct"] = is_correct
         st.session_state["result_arrested_name"] = arrested_name
@@ -467,7 +401,6 @@ def show_arrest_suspect() -> None:
         st.session_state["page"] = "you_win" if is_correct else "you_lose"
         st.rerun()
 
-    # Én knap pr. mistænkt til at vælge dem
     sel_cols = st.columns(max(total, 1))
     for i, col in enumerate(sel_cols):
         with col:

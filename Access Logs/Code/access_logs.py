@@ -1,142 +1,45 @@
-import base64
-import html
+﻿import html
 import math
-import os
 import sys
 from pathlib import Path
 
-from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
-from sqlalchemy import create_engine, text
 
 
-project_root = Path(__file__).resolve().parents[2]
-back_button_code_dir = project_root / "Back to main menu" / "Code"
-screen_arrows_code_dir = project_root / "Screen arrows" / "Code"
-witness_file_code_dir = project_root / "Witness file" / "Code"
+shared_code_dir = Path(__file__).resolve().parents[2] / "Shared" / "Code"
 
-if str(back_button_code_dir) not in sys.path:
-    sys.path.append(str(back_button_code_dir))
-if str(screen_arrows_code_dir) not in sys.path:
-    sys.path.append(str(screen_arrows_code_dir))
-if str(witness_file_code_dir) not in sys.path:
-    sys.path.append(str(witness_file_code_dir))
+if str(shared_code_dir) not in sys.path:
+    sys.path.append(str(shared_code_dir))
+
+from path_helpers import add_code_paths, assets_dir, code_dir
+
+add_code_paths(
+    code_dir("Back to main menu"),
+    code_dir("Screen arrows"),
+    code_dir("Database"),
+)
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 from screen_arrows import screen_arrow_css, make_screen_arrow_button
+from database_helpers import get_access_logs
+from ui_helpers import get_aspect_ratio, image_to_base64, navigate_script, streamlit_chrome_css
 
 
-ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
+ASSETS_DIR = assets_dir(__file__)
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/streamlit_db",
-)
-
-
-def fetch_presence_data() -> list[dict]:
-    """
-    Fetch presence data from the Presence table and join with Person table.
-    Returns a list of dictionaries with person name, arrival time, departure time, and work status.
-    """
-    try:
-        return fetch_presence_data_from_database()
-    except Exception:
-        return fetch_presence_data_from_local_persons()
-
-
-def fetch_presence_data_from_database() -> list[dict]:
-    engine = create_engine(DATABASE_URL)
-
-    with engine.connect() as connection:
-        query = text("""
-            SELECT
-                p.person_id,
-                p.name,
-                p.role,
-                pr.arrived_at,
-                pr.left_at,
-                pr.was_working
-            FROM Presence pr
-            JOIN Person p ON pr.person_id = p.person_id
-            ORDER BY pr.arrived_at ASC
-        """)
-
-        rows = connection.execute(query).fetchall()
-
-    access_log = []
-    for row in rows:
-        person_id, name, role, arrived_at, left_at, was_working = row
-        arrived_time = arrived_at.strftime("%H:%M") if arrived_at else ""
-        left_time = left_at.strftime("%H:%M") if left_at else ""
-
-        access_log.append({
-            "person_id": person_id,
-            "person": name,
-            "role": role,
-            "arrived": arrived_time,
-            "left": left_time,
-            "works_here": "Yes" if was_working else "No",
-        })
-
-    return access_log
-
-
-def fetch_presence_data_from_local_persons() -> list[dict]:
-    try:
-        from witness_overview import PERSONS
-    except ImportError:
-        return []
-
-    def looks_like_employee(role: str) -> bool:
-        role_lower = role.lower()
-        return "employee" in role_lower or role_lower in {"investigator", "watchmaker"}
-
-    return [
-        {
-            "person_id": person.get("id", ""),
-            "person": person.get("name", ""),
-            "role": person.get("role", ""),
-            "arrived": person.get("arrived", ""),
-            "left": person.get("left", ""),
-            "works_here": "Yes" if looks_like_employee(person.get("role", "")) else "No",
-        }
-        for person in PERSONS
-    ]
-
-
-# ── Adgangslog ────────────────────────────────────────────────────────────────
-# Will be populated from the database when show_access_logs() is called
-ACCESS_LOG: list[dict] = []
-
-# ── Tabel-layout på billedet (i % af billedets bredde/højde) ─────────────────
-# Juster x-værdierne hvis teksten ikke lander på de korrekte kolonner.
 ROWS_PER_PAGE = 10
 
 TABLE = {
-    "x_person":    25.5,   # venstre kant af "Person"-kolonnen
-    "x_role":      39.5,   # venstre kant af "Role"-kolonnen
-    "x_arrived":   51.0,   # venstre kant af "Arrived"-kolonnen
-    "x_left":      59.0,   # venstre kant af "Left"-kolonnen
-    "x_working":   67.0,   # venstre kant af "Working"-kolonnen
-    "y_header":    32.2,   # top af kolonneoverskrifterne (%)
-    "y_first":     36.5,   # top af første datarække (%)
-    "row_h":        4.3,   # højde pr. række (%)
+    "x_person":    25.5,
+    "x_role":      39.5,
+    "x_arrived":   51.0,
+    "x_left":      59.0,
+    "x_working":   67.0,
+    "y_header":    32.2,
+    "y_first":     36.5,
+    "row_h":        4.3,
 }
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def image_to_base64(image_path: Path) -> str:
-    with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-
-def get_aspect_ratio(image_path: Path) -> float:
-    with Image.open(image_path) as img:
-        w, h = img.size
-    return w / h
-
 
 def _escape(value: object) -> str:
     return html.escape(str(value or ""))
@@ -197,39 +100,17 @@ def _build_rows_html(page_entries: list[dict]) -> str:
     return html
 
 
-def _streamlit_chrome_css() -> str:
-    return """
-        <style>
-        html, body, .stApp {
-            margin: 0 !important; padding: 0 !important;
-            overflow: hidden !important; background: #2a1a0a !important;
-        }
-        [data-testid="stHeader"] { background: rgba(0,0,0,0) !important; height: 0rem !important; }
-        [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
-        .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; height: 100vh !important; overflow: hidden !important; }
-        section.main, div[data-testid="stAppViewContainer"], div[data-testid="stVerticalBlock"] { overflow: hidden !important; }
-        iframe { width: 100vw !important; height: 100vh !important; display: block !important; border: none !important; }
-        .element-container:has(iframe) { width: 100vw !important; height: 100vh !important; overflow: hidden !important; }
-        </style>
-    """
-
-
 def show_access_logs() -> None:
-    global ACCESS_LOG
-    
-    # Fetch data from database if not already loaded
-    if not ACCESS_LOG:
-        ACCESS_LOG = fetch_presence_data()
-    
     bg_path = ASSETS_DIR / "Access logs.png"
     if not bg_path.exists():
-        st.error(f"Baggrundsbillede ikke fundet: {bg_path}")
+        st.error(f"Background image not found: {bg_path}")
         st.stop()
 
     bg_b64       = image_to_base64(bg_path)
     aspect_ratio = get_aspect_ratio(bg_path)
 
-    total_entries = len(ACCESS_LOG)
+    access_log = get_access_logs()
+    total_entries = len(access_log)
     total_pages   = max(1, math.ceil(total_entries / ROWS_PER_PAGE))
 
     if "al_page" not in st.session_state:
@@ -239,7 +120,7 @@ def show_access_logs() -> None:
     st.session_state.al_page = current_page
 
     start = current_page * ROWS_PER_PAGE
-    page_entries = ACCESS_LOG[start : start + ROWS_PER_PAGE]
+    page_entries = access_log[start : start + ROWS_PER_PAGE]
     
     header_html = _build_header_html()
     rows_html = _build_rows_html(page_entries)
@@ -254,19 +135,19 @@ def show_access_logs() -> None:
         direction="left",
         onclick="navigate('prev')",
         css_class="al-arrow-left",
-        aria_label="Forrige side",
+        aria_label="Previous page",
     ) if show_left else ""
 
     right_arrow = make_screen_arrow_button(
         direction="right",
         onclick="navigate('next')",
         css_class="al-arrow-right",
-        aria_label="Næste side",
+        aria_label="Next page",
     ) if show_right else ""
 
-    counter_text = f"Side {current_page + 1} / {total_pages}" if total_pages > 1 else ""
+    counter_text = f"Page {current_page + 1} / {total_pages}" if total_pages > 1 else ""
 
-    st.markdown(_streamlit_chrome_css(), unsafe_allow_html=True)
+    st.markdown(streamlit_chrome_css(), unsafe_allow_html=True)
 
     html = f"""
     <!DOCTYPE html>
@@ -339,8 +220,8 @@ def show_access_logs() -> None:
     </head>
     <body>
         <div class="al-page">
-            {back_btn_html}
             <div class="al-stage">
+                {back_btn_html}
                 <img class="al-bg" src="data:image/png;base64,{bg_b64}" alt="Access Logs">
                 {header_html}
                 {rows_html}
@@ -350,17 +231,7 @@ def show_access_logs() -> None:
             </div>
         </div>
 
-        <script>
-        function navigate(page) {{
-            var buttons = window.parent.document.querySelectorAll('button');
-            for (var i = 0; i < buttons.length; i++) {{
-                if (buttons[i].innerText.trim() === page) {{
-                    buttons[i].click();
-                    return;
-                }}
-            }}
-        }}
-        </script>
+        {navigate_script()}
     </body>
     </html>
     """
