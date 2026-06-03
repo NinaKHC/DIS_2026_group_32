@@ -101,6 +101,8 @@ eyes_color = conn.session.execute(text("SELECT eye_color FROM Person")).all()
 skin_color = conn.session.execute(text("SELECT skin_color FROM Person")).all()
 role = conn.session.execute(text("SELECT role FROM Person")).all()
 hair_color = conn.session.execute(text("SELECT hair_color FROM Person")).all()
+arrivals = conn.session.execute(text("SELECT arrived_at FROM Presence ORDER BY person_id")).all()
+left = conn.session.execute(text("SELECT left_at FROM Presence ORDER BY person_id")).all()
 
 PERSONS = [{
         "id":1,
@@ -111,7 +113,8 @@ PERSONS = [{
         "eyes": "",
         "skin": "",
         "role":"todo",
-        "arrived": "unimplemented",
+        "arrived": "",
+        "left": "",
         "hair": "",
         "statement": "unimplemented"
     } for x in range(num_witnesses)]
@@ -125,7 +128,8 @@ for i in range(num_witnesses):
     PERSONS[id[i][0] - 1]["skin"] = skin_color[i][0]
     PERSONS[id[i][0] - 1]["hair"] = hair_color[i][0]
     PERSONS[id[i][0] - 1]["role"] = role[i][0]
-    #PERSONS[id[i][0] - 1]["arrived"] = conn.session.execute(text("SELECT arrived_at FROM Presence WHERE person_id = " + str(id[i][0]))).all()[0]
+    PERSONS[id[i][0] - 1]["arrived"] = arrivals[id[i][0] - 1][0].strftime("%X")
+    PERSONS[id[i][0] - 1]["left"] = left[id[i][0] - 1][0].strftime("%X")
 
 STOLEN_ITEM = "the necklace"
 CRIME_TIME = "12:30"
