@@ -27,7 +27,6 @@ sys.modules.pop("witness_button", None)
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 from screen_arrows import screen_arrow_css, make_screen_arrow_button
-from person_birth_details import get_person_birth_details
 from witness_button import (
     get_witness_file_button_css,
     get_witness_file_button_html,
@@ -203,7 +202,6 @@ def _witness_fields_html(witness: dict) -> str:
 
 def _person_to_witness(person: dict) -> dict:
     person_id = person.get("id", 0)
-    birth_details = get_person_birth_details(person_id)
     role = person.get("role", "")
     arrived = person.get("arrived", "")
     left = person.get("left", "")
@@ -217,8 +215,8 @@ def _person_to_witness(person: dict) -> dict:
     return {
         "full_name": person.get("name", ""),
         "occupation": role,
-        "age": birth_details["age"],
-        "date_of_birth": birth_details["date_of_birth"],
+        "age": str(person.get("age", "")),
+        "date_of_birth": str(person.get("date_of_birth", "")),
         "personal_characteristics": appearance,
         "clothing": person.get("clothing", ""),
         "distinguishing_features": (

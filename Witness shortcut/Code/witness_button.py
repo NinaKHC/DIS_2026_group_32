@@ -29,9 +29,6 @@ def get_witness_button_css(
     highlight_filename: str,
     selected: bool = False,
 ) -> str:
-    """
-    CSS for an image-based witness shortcut tab inside a components.html() iframe.
-    """
     normal_url = _asset_data_url(normal_filename)
     highlight_url = _asset_data_url(highlight_filename)
     active_url = highlight_url if selected else normal_url
@@ -173,18 +170,6 @@ def get_witness_file_button_html(
     """
 
 
-def get_witness_static_button_html(
-    css_class: str,
-    label: str,
-) -> str:
-    """
-    HTML for a shortcut tab that is visible but has no route yet.
-    """
-    return f"""
-    <div class="{css_class}" role="button" aria-label="{label}"></div>
-    """
-
-
 def get_witness_search_button_html(
     btn_key: str = "wb_witness_search",
     css_class: str = "witness-green-tab",
@@ -209,9 +194,6 @@ def render_witness_overview_button_streamlit(
     btn_key: str = "wb_witness_overview",
     target_page: str = "witnesses",
 ) -> None:
-    """
-    Hidden Streamlit button used by the yellow Witness Overview tab.
-    """
     if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
         st.session_state["page"] = target_page
         st.rerun()
@@ -221,9 +203,6 @@ def render_witness_file_button_streamlit(
     btn_key: str = "wb_witness_file",
     target_page: str = "witness_file",
 ) -> None:
-    """
-    Hidden Streamlit button used by the blue Witness File tab.
-    """
     if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
         st.session_state["page"] = target_page
         st.rerun()
@@ -233,9 +212,6 @@ def render_witness_red_button_streamlit(
     btn_key: str = "wb_suspects",
     target_page: str = "suspects",
 ) -> None:
-    """
-    Hidden Streamlit button used by the red Suspects tab.
-    """
     if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
         st.session_state["page"] = target_page
         st.rerun()
@@ -245,9 +221,6 @@ def render_witness_search_button_streamlit(
     btn_key: str = "wb_witness_search",
     target_page: str = "witness_search",
 ) -> None:
-    """
-    Hidden Streamlit button used by the green Witness Search tab.
-    """
     if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
         st.session_state["page"] = target_page
         st.rerun()
