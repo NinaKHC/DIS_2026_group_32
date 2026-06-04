@@ -66,30 +66,6 @@ ASSETS_DIR  = Path(__file__).resolve().parents[1] / "Assets"
 CHARS_DIR   = project_root / "Characters"
 BG_FILENAME = "Witness overview.png"
 
-# ── Persondata ────────────────────────────────────────────────────────────────
-# Når SQL-databasen kobles til, erstat PERSONS med en forespørgsel:
-#
-#   import psycopg2
-#   conn = psycopg2.connect(DATABASE_URL)
-#   cur  = conn.cursor()
-#   cur.execute("""
-#       SELECT p.person_id, p.name, p.role, p.gender,
-#              p.hair_color, p.eye_color, p.skin_color, p.clothing,
-#              TO_CHAR(pr.arrived_at,'HH24:MI') AS arrived,
-#              TO_CHAR(pr.left_at,  'HH24:MI') AS left,
-#              s.statement_text
-#       FROM Person p
-#       LEFT JOIN Presence  pr ON p.person_id = pr.person_id
-#       LEFT JOIN Statement s  ON p.person_id = s.person_id
-#       ORDER BY p.person_id
-#   """)
-#   PERSONS = [
-#       {"id":r[0],"name":r[1],"role":r[2],"gender":r[3],
-#        "hair":r[4],"eyes":r[5],"skin":r[6],"clothing":r[7],
-#        "arrived":r[8],"left":r[9],"statement":r[10] or ""}
-#       for r in cur.fetchall()
-#   ]
-
 conn = st.connection("postgresql", type="sql")
 
 num_witnesses = conn.session.execute(text("SELECT COUNT(*) FROM Person;")).first()[0]
@@ -214,12 +190,6 @@ def _get_current_game_persons() -> list[dict]:
         return selected_characters
     return PERSONS
 
-
-def _person_by_id(pid: int, persons: list[dict] | None = None) -> dict | None:
-    persons = persons if persons is not None else _get_current_game_persons()
-    return next((p for p in persons if p["id"] == pid), None)
-
-
 def _display_value(value: object) -> str:
     return str(value or "").strip()
 
@@ -308,7 +278,7 @@ def _build_attrs_html(person: dict | None) -> str:
     attrs = [
         "2026-05-12",
         "Maison Aurora Jewelry",
-        f"{person.get('arrived','–')} – {person.get('left','–')}",
+        f"{person.get('arrived','-')} - {person.get('left','-')}",
         person.get("role", ""),
         f"{person.get('hair','')} hair · {person.get('eyes','')} eyes · {person.get('skin','')} skin",
         person.get("clothing", ""),
@@ -361,7 +331,7 @@ def show_witness_overview() -> None:
 
     selected_id    = st.session_state.wo_selected
     suspicious_ids = st.session_state.wo_suspicious
-    person         = _person_by_id(selected_id, game_persons)
+    person         = game_persons[selected_id]
 
     # ── HTML byggeblokke ──────────────────────────────────────────────────────
     l = LAYOUT
