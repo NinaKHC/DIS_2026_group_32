@@ -267,7 +267,7 @@ def show_witnesses() -> None:
     witness_red_tab_css = get_witness_red_button_css(
         css_class="witness-red-tab",
         left="82.9%",
-        top="11.6%",
+        top="7.6%",
         selected=False,
     )
     witness_green_tab_html = get_witness_search_button_html(
@@ -278,7 +278,7 @@ def show_witnesses() -> None:
     witness_green_tab_css = get_witness_green_button_css(
         css_class="witness-green-tab",
         left="82.9%",
-        top="65.8%",
+        top="68.3%",
     )
 
     feature_dir = Path(__file__).resolve().parents[1]

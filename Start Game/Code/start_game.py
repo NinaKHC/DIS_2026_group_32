@@ -44,8 +44,10 @@ try:
     from database_helpers import (
         get_persons,
         reset_guilty_suspect_flags,
+        reset_in_game_flags,
         reset_truthfull_flags,
         set_guilty_suspect_flag,
+        set_in_game_flags,
         set_untruthful_flags,
     )
 except ImportError:
@@ -55,10 +57,16 @@ except ImportError:
     def reset_guilty_suspect_flags() -> None:
         return None
 
+    def reset_in_game_flags() -> None:
+        return None
+
     def reset_truthfull_flags() -> None:
         return None
 
     def set_guilty_suspect_flag(person_id: int) -> None:
+        return None
+
+    def set_in_game_flags(person_ids: list[int]) -> None:
         return None
 
     def set_untruthful_flags(person_ids: list[int]) -> None:
@@ -74,6 +82,7 @@ CHARACTERS_PER_GAME = 25
 def start_new_game(start_page: str = "witnesses") -> None:
     reset_current_game_state(keep_page=True)
     reset_guilty_suspect_flags()
+    reset_in_game_flags()
     reset_truthfull_flags()
 
     all_persons = [
@@ -88,7 +97,13 @@ def start_new_game(start_page: str = "witnesses") -> None:
     guilty_suspect = setup_guilty_suspect(selected_characters)
     untruthful_ids = setup_untruthful_characters(selected_characters)
     guilty_id = guilty_suspect.get("id")
+    selected_ids = [
+        int(character["id"])
+        for character in selected_characters
+        if character.get("id") is not None
+    ]
 
+    set_in_game_flags(selected_ids)
     if guilty_id is not None:
         set_guilty_suspect_flag(int(guilty_id))
     set_untruthful_flags([int(person_id) for person_id in untruthful_ids])

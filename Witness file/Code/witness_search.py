@@ -131,30 +131,30 @@ def show_witness_search() -> None:
     overview_tab_html = get_witness_overview_button_html(btn_key="ws_tab_overview")
     overview_tab_css = get_witness_overview_button_css(
         css_class="witness-overview-tab",
-        left="84.6%",
+        left="83.6%",
         top="27.7%",
         selected=False,
     )
     file_tab_html = get_witness_file_button_html(btn_key="ws_tab_file")
     file_tab_css = get_witness_file_button_css(
         css_class="witness-file-tab",
-        left="84.9%",
+        left="83.9%",
         top="46.8%",
         selected=False,
     )
     red_tab_html = get_witness_red_button_html(btn_key="ws_tab_suspects")
     red_tab_css = get_witness_red_button_css(
         css_class="witness-red-tab",
-        left="84.7%",
-        top="11.6%",
+        left="83.7%",
+        top="7.6%",
         selected=False,
     )
     search_tab_html = get_witness_search_button_html(btn_key="ws_tab_search")
     search_tab_css = get_witness_green_button_css(
         css_class="witness-green-tab",
-        left="85.2%",
-        top="65.8%",
-        selected=False,
+        left="84.2%",
+        top="68.3%",
+        selected=True,
     )
 
     st.markdown(streamlit_chrome_css(background="#2a1a0a"), unsafe_allow_html=True)

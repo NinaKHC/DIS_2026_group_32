@@ -72,10 +72,10 @@ def get_witness_button_css(
 
 def get_witness_overview_button_css(
     css_class: str = "witness-overview-tab",
-    left: str = "84.7%",
-    top: str = "22.7%",
-    width: str = "5.2%",
-    height: str = "17.0%",
+    left: str = "83.4%",
+    top: str = "18.5%",
+    width: str = "7.8%",
+    height: str = "25.5%",
     selected: bool = False,
 ) -> str:
     return get_witness_button_css(
@@ -92,10 +92,10 @@ def get_witness_overview_button_css(
 
 def get_witness_file_button_css(
     css_class: str = "witness-file-tab",
-    left: str = "84.9%",
-    top: str = "42.8%",
-    width: str = "5.2%",
-    height: str = "17.0%",
+    left: str = "83.4%",
+    top: str = "18.5%",
+    width: str = "7.8%",
+    height: str = "25.5%",
     selected: bool = False,
 ) -> str:
     return get_witness_button_css(
@@ -112,10 +112,10 @@ def get_witness_file_button_css(
 
 def get_witness_red_button_css(
     css_class: str = "witness-red-tab",
-    left: str = "84.9%",
-    top: str = "8.6%",
-    width: str = "5.2%",
-    height: str = "17.0%",
+    left: str = "83.4%",
+    top: str = "18.5%",
+    width: str = "7.8%",
+    height: str = "25.5%",
     selected: bool = False,
 ) -> str:
     return get_witness_button_css(
@@ -132,10 +132,10 @@ def get_witness_red_button_css(
 
 def get_witness_green_button_css(
     css_class: str = "witness-green-tab",
-    left: str = "84.9%",
-    top: str = "62.8%",
-    width: str = "5.2%",
-    height: str = "17.0%",
+    left: str = "83.4%",
+    top: str = "18.5%",
+    width: str = "7.8%",
+    height: str = "25.5%",
     selected: bool = False,
 ) -> str:
     return get_witness_button_css(

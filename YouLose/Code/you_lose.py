@@ -8,12 +8,16 @@ import streamlit.components.v1 as components
 
 
 project_root = Path(__file__).resolve().parents[2]
-back_button_code_dir = project_root / "Back to main menu" / "Code"
+back_button_code_dir = project_root / "Back to start" / "Code"
 
 if str(back_button_code_dir) not in sys.path:
     sys.path.append(str(back_button_code_dir))
 
-from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
+from back_to_start import (
+    get_back_to_start_button_css,
+    get_back_to_start_button_html,
+    render_back_to_start_streamlit,
+)
 
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
@@ -79,8 +83,8 @@ def show_you_lose() -> None:
         "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
     )
 
-    back_btn_html = get_back_button_html(btn_key="yl_back")
-    back_btn_css  = get_back_button_css(left="1.0%", top="1.5%", width="8%")
+    back_btn_html = get_back_to_start_button_html(btn_key="yl_back")
+    back_btn_css  = get_back_to_start_button_css(left="1.0%", top="1.5%", width="18%")
 
     st.markdown(
         """
@@ -146,4 +150,4 @@ def show_you_lose() -> None:
     """
 
     components.html(html, height=1, scrolling=False)
-    render_back_button_streamlit(btn_key="yl_back", target_page="main_menu")
+    render_back_to_start_streamlit(btn_key="yl_back", target_page="start_screen")

@@ -1,5 +1,6 @@
 ﻿import sys
 from pathlib import Path
+import random
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -59,9 +60,21 @@ except ImportError:
         return None
 
 try:
-    from database_helpers import get_persons, get_suspicious_person_ids, set_suspicious_flag
+    from database_helpers import (
+        get_in_game_persons,
+        get_persons,
+        get_stolen_items,
+        get_suspicious_person_ids,
+        set_suspicious_flag,
+    )
 except ImportError:
     def get_persons(fallback: list[dict] | None = None) -> list[dict]:
+        return fallback or []
+
+    def get_in_game_persons(fallback: list[dict] | None = None) -> list[dict]:
+        return fallback or []
+
+    def get_stolen_items(fallback: list[dict] | None = None, limit: int | None = None) -> list[dict]:
         return fallback or []
 
     def get_suspicious_person_ids(game_id: int) -> set[int]:
@@ -84,9 +97,6 @@ def _save_suspicious_flag(person_id: int, is_suspicious: bool) -> None:
 
 PERSONS = get_persons([])
 
-STOLEN_ITEM = "the necklace"
-CRIME_TIME = "12:30"
-
 LAYOUT = {
     "photo_left": 11.0, "photo_top": 4.5, "photo_w": 42.0, "photo_h": 46.0,
     "stmt_left": 56.0, "stmt_top": 15.9, "stmt_w": 21.5, "stmt_h": 20.0,
@@ -97,10 +107,22 @@ LAYOUT = {
 }
 
 
+def _case_details() -> tuple[str, str]:
+    stolen_items = get_stolen_items(limit=1)
+    if not stolen_items:
+        return "stolen jewelry", "12:30"
+
+    item = stolen_items[0]
+    return item.get("description", "stolen jewelry"), item.get("time_stolen", "12:30")
+
+
 def get_current_game_persons() -> list[dict]:
     selected_characters = get_selected_characters()
     if selected_characters:
         return selected_characters
+    in_game_persons = get_in_game_persons([])
+    if in_game_persons:
+        return in_game_persons
     return PERSONS
 
 
@@ -111,6 +133,21 @@ def _person_by_id(pid: int, persons: list[dict] | None = None) -> dict | None:
 
 def _display_value(value: object) -> str:
     return str(value or "").strip()
+
+
+def _statement_clothing_hint(clothing: object, witness_id: int | None, target_id: int | None) -> str:
+    clothing_items = [
+        item.strip()
+        for item in str(clothing or "").split(",")
+        if item.strip()
+    ]
+    if not clothing_items:
+        return ""
+
+    seed = f"{witness_id or 0}:{target_id or 0}:{'|'.join(clothing_items)}"
+    picker = random.Random(seed)
+    count = min(len(clothing_items), picker.randint(1, 3))
+    return ", ".join(picker.sample(clothing_items, count))
 
 
 def _statement_for_person(person: dict | None) -> str:
@@ -137,14 +174,20 @@ def _statement_for_person(person: dict | None) -> str:
         if candidates:
             clue_target = candidates[person.get("id", 0) % len(candidates)]
 
+    stolen_item, crime_time = _case_details()
+
     replacements = {
         "{{culprit_hair_color}}": _display_value(clue_target.get("hair")).lower(),
         "{{culprit_eye_color}}": _display_value(clue_target.get("eyes")).lower(),
         "{{culprit_skin_color}}": _display_value(clue_target.get("skin")).lower(),
-        "{{culprit_clothing}}": _display_value(clue_target.get("clothing")).lower(),
+        "{{culprit_clothing}}": _statement_clothing_hint(
+            clue_target.get("clothing"),
+            person.get("id"),
+            clue_target.get("id"),
+        ).lower(),
         "{{culprit_gender}}": _display_value(clue_target.get("gender")).lower(),
-        "{{crime_time}}": CRIME_TIME,
-        "{{stolen_item}}": STOLEN_ITEM,
+        "{{crime_time}}": crime_time,
+        "{{stolen_item}}": stolen_item,
     }
 
     statement = template
@@ -300,7 +343,7 @@ def show_witness_overview() -> None:
     witness_red_tab_html = get_witness_red_button_html(btn_key="wo_tab_suspects")
     witness_red_tab_css = get_witness_red_button_css(
         css_class="witness-red-tab",
-        top="11.6%",
+        top="7.6%",
     )
     witness_green_tab_html = get_witness_search_button_html(
         btn_key="wo_tab_search",
@@ -309,7 +352,7 @@ def show_witness_overview() -> None:
     )
     witness_green_tab_css = get_witness_green_button_css(
         css_class="witness-green-tab",
-        top="65.8%",
+        top="68.3%",
     )
 
     st.markdown(streamlit_chrome_css(), unsafe_allow_html=True)

@@ -254,7 +254,7 @@ def show_suspects() -> None:
     suspect_tab_css = get_witness_red_button_css(
         css_class="witness-red-tab",
         left="82.9%",
-        top="11.6%",
+        top="7.6%",
         selected=True,
     )
     witness_green_tab_html = get_witness_search_button_html(
@@ -265,7 +265,7 @@ def show_suspects() -> None:
     witness_green_tab_css = get_witness_green_button_css(
         css_class="witness-green-tab",
         left="82.9%",
-        top="65.8%",
+        top="68.3%",
     )
 
     page_assets_dir = assets_dir(__file__)

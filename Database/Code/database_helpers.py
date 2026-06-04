@@ -24,6 +24,19 @@ def _engine():
     return create_engine(DATABASE_URL)
 
 
+def _ensure_person_game_column() -> None:
+    with _engine().begin() as connection:
+        connection.execute(text("""
+            ALTER TABLE Person
+            ADD COLUMN IF NOT EXISTS is_in_game BOOLEAN DEFAULT FALSE
+        """))
+        connection.execute(text("""
+            UPDATE Person
+            SET is_in_game = FALSE
+            WHERE is_in_game IS NULL
+        """))
+
+
 def _handle_database_error(context: str, error: Exception) -> None:
     errors = st.session_state.setdefault("_database_errors", [])
     errors.append(f"{context}: {error}")
@@ -125,7 +138,7 @@ def _parse_persons_from_sql_file() -> list[dict]:
 
     for block in _parse_insert_blocks("Person"):
         values = _split_sql_values(block)
-        if len(values) < 11:
+        if len(values) < 12:
             continue
 
         person_id = int(values[0])
@@ -142,6 +155,7 @@ def _parse_persons_from_sql_file() -> list[dict]:
             "date_of_birth": _format_sql_date_text(values[9]),
             "is_suspect": values[10].upper() == "TRUE",
             "truthfull": values[11].upper() == "TRUE" if len(values) > 11 else True,
+            "is_in_game": values[12].upper() == "TRUE" if len(values) > 12 else False,
             "arrived": "",
             "left": "",
             "works_here": False,
@@ -270,6 +284,7 @@ PERSONS_QUERY = text("""
         p.date_of_birth,
         p.is_suspect,
         p.truthfull,
+        p.is_in_game,
         pr.arrived_at,
         pr.left_at,
         pr.was_working,
@@ -297,6 +312,7 @@ def _person_from_database_row(row: Any) -> dict:
         date_of_birth,
         is_suspect,
         truthfull,
+        is_in_game,
         arrived_at,
         left_at,
         was_working,
@@ -317,6 +333,7 @@ def _person_from_database_row(row: Any) -> dict:
         "date_of_birth": _format_date(date_of_birth),
         "is_suspect": bool(is_suspect),
         "truthfull": bool(truthfull),
+        "is_in_game": bool(is_in_game),
         "arrived": _format_time(arrived_at),
         "left": _format_time(left_at),
         "works_here": bool(was_working),
@@ -327,6 +344,7 @@ def _person_from_database_row(row: Any) -> dict:
 
 @st.cache_data(ttl=60)
 def fetch_persons_from_database() -> list[dict]:
+    _ensure_person_game_column()
     with _engine().connect() as connection:
         rows = connection.execute(PERSONS_QUERY).fetchall()
     return [_person_from_database_row(row) for row in rows]
@@ -345,6 +363,10 @@ def get_persons(fallback: list[dict] | None = None) -> list[dict]:
         return persons
 
     return fallback or []
+
+
+def get_in_game_persons(fallback: list[dict] | None = None) -> list[dict]:
+    return [person for person in get_persons(fallback) if person.get("is_in_game")]
 
 
 @st.cache_data(ttl=60)
@@ -420,10 +442,13 @@ def get_evidence_items(fallback: list[dict] | None = None) -> list[dict]:
 
 @st.cache_data(ttl=60)
 def fetch_access_logs_from_database() -> list[dict]:
+    _ensure_person_game_column()
     query = text("""
-        SELECT person_id, person, role, arrived_at, left_at, was_working
-        FROM Access_log_view
-        ORDER BY arrived_at
+        SELECT v.person_id, v.person, v.role, v.arrived_at, v.left_at, v.was_working
+        FROM Access_log_view v
+        JOIN Person p ON p.person_id = v.person_id
+        WHERE p.is_in_game = TRUE
+        ORDER BY v.arrived_at
     """)
 
     with _engine().connect() as connection:
@@ -459,10 +484,22 @@ def get_access_logs(fallback: list[dict] | None = None) -> list[dict]:
 
 @st.cache_data(ttl=60)
 def fetch_timeline_events_from_database() -> list[dict]:
+    _ensure_person_game_column()
     query = text("""
-        SELECT name, event_time, event_type
-        FROM Timeline_event_view
-        WHERE event_time IS NOT NULL
+        SELECT p.name, pr.arrived_at AS event_time, 'arrival' AS event_type
+        FROM Presence pr
+        JOIN Person p ON p.person_id = pr.person_id
+        WHERE p.is_in_game = TRUE
+          AND pr.arrived_at IS NOT NULL
+        UNION ALL
+        SELECT p.name, pr.left_at AS event_time, 'departure' AS event_type
+        FROM Presence pr
+        JOIN Person p ON p.person_id = pr.person_id
+        WHERE p.is_in_game = TRUE
+          AND pr.left_at IS NOT NULL
+        UNION ALL
+        SELECT 'Robbery' AS name, MIN(time_of_crime) AS event_time, 'event' AS event_type
+        FROM Item_stolen
         ORDER BY event_time
     """)
 
@@ -496,10 +533,13 @@ def get_timeline_events(fallback: list[dict] | None = None) -> list[dict]:
 
 @st.cache_data(ttl=60)
 def fetch_map_markers_from_database() -> list[dict]:
+    _ensure_person_game_column()
     query = text("""
-        SELECT marker_id, name, x_percent, y_percent, color, person_id
-        FROM Map_marker_view
-        ORDER BY marker_id
+        SELECT v.marker_id, v.name, v.x_percent, v.y_percent, v.color, v.person_id
+        FROM Map_marker_view v
+        LEFT JOIN Person p ON p.person_id = v.person_id
+        WHERE v.person_id IS NULL OR p.is_in_game = TRUE
+        ORDER BY v.marker_id
     """)
 
     with _engine().connect() as connection:
@@ -531,6 +571,13 @@ def get_map_markers(fallback: list[dict] | None = None) -> list[dict]:
         return markers
 
     return fallback or []
+
+
+def clear_person_data_caches() -> None:
+    fetch_persons_from_database.clear()
+    fetch_access_logs_from_database.clear()
+    fetch_timeline_events_from_database.clear()
+    fetch_map_markers_from_database.clear()
 
 
 CREATE_GAME_STATE_TABLES = [
@@ -616,6 +663,21 @@ SET_UNTRUTHFUL_FLAGS_QUERY = text("""
 """)
 
 
+RESET_IN_GAME_FLAGS_QUERY = text("""
+    UPDATE Person
+    SET is_in_game = FALSE
+""")
+
+
+SET_IN_GAME_FLAGS_QUERY = text("""
+    UPDATE Person
+    SET is_in_game = CASE
+        WHEN person_id = ANY(:person_ids) THEN TRUE
+        ELSE FALSE
+    END
+""")
+
+
 def ensure_game_tables() -> None:
     with _engine().begin() as connection:
         for statement in CREATE_GAME_STATE_TABLES:
@@ -650,7 +712,7 @@ def reset_guilty_suspect_flags() -> None:
     try:
         with _engine().begin() as connection:
             connection.execute(RESET_GUILTY_SUSPECT_QUERY)
-        fetch_persons_from_database.clear()
+        clear_person_data_caches()
     except Exception as error:
         _handle_database_error("reset guilty suspect flags", error)
 
@@ -659,7 +721,7 @@ def set_guilty_suspect_flag(person_id: int) -> None:
     try:
         with _engine().begin() as connection:
             connection.execute(SET_GUILTY_SUSPECT_QUERY, {"person_id": person_id})
-        fetch_persons_from_database.clear()
+        clear_person_data_caches()
     except Exception as error:
         _handle_database_error("set guilty suspect flag", error)
 
@@ -668,7 +730,7 @@ def reset_truthfull_flags() -> None:
     try:
         with _engine().begin() as connection:
             connection.execute(RESET_TRUTHFULL_FLAGS_QUERY)
-        fetch_persons_from_database.clear()
+        clear_person_data_caches()
     except Exception as error:
         _handle_database_error("reset truthfull flags", error)
 
@@ -680,9 +742,32 @@ def set_untruthful_flags(person_ids: list[int]) -> None:
                 connection.execute(SET_UNTRUTHFUL_FLAGS_QUERY, {"person_ids": person_ids})
             else:
                 connection.execute(RESET_TRUTHFULL_FLAGS_QUERY)
-        fetch_persons_from_database.clear()
+        clear_person_data_caches()
     except Exception as error:
         _handle_database_error("set untruthful flags", error)
+
+
+def reset_in_game_flags() -> None:
+    try:
+        _ensure_person_game_column()
+        with _engine().begin() as connection:
+            connection.execute(RESET_IN_GAME_FLAGS_QUERY)
+        clear_person_data_caches()
+    except Exception as error:
+        _handle_database_error("reset in-game flags", error)
+
+
+def set_in_game_flags(person_ids: list[int]) -> None:
+    try:
+        _ensure_person_game_column()
+        with _engine().begin() as connection:
+            if person_ids:
+                connection.execute(SET_IN_GAME_FLAGS_QUERY, {"person_ids": person_ids})
+            else:
+                connection.execute(RESET_IN_GAME_FLAGS_QUERY)
+        clear_person_data_caches()
+    except Exception as error:
+        _handle_database_error("set in-game flags", error)
 
 
 def save_arrest_guess(game_id: int, person_id: int, is_correct: bool) -> None:
