@@ -19,6 +19,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
+ARG POSTGRES_USER
+ARG POSTGRES_PASSWORD
+RUN echo "\nusername = \"$POSTGRES_USER\"\npassword = \"$POSTGRES_PASSWORD\"" >> .streamlit/secrets.toml
+
 # Expose the port Streamlit runs on
 EXPOSE 8501
 

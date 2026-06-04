@@ -22,18 +22,23 @@ services:
 
   # Streamlit Application
   streamlit:
-    build: .
+    build:
+      context: .
+      args:
+        - POSTGRES_USER
+        - POSTGRES_PASSWORD
     container_name: streamlit_app
     ports:
       - "8501:8501"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:${POSTGRES_PORT:-postgres}/${POSTGRES_DB:-streamlit_db}
       CHOKIDAR_USEPOLLING: "true"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - .:/app
+#    volumes:
+#      - .:/app
     networks:
       - app-network
 

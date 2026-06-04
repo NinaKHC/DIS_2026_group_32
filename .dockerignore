@@ -25,3 +25,4 @@ node_modules
 *.md
 .vscode
 .idea
+!.streamlit/secrets.toml
