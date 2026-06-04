@@ -44,7 +44,7 @@ POSTGRES_DB=streamlit_db
   sudo docker-compose up --build
   ```
   
-  on windows run
+  on windows, open Docker Desktop, and run
   ```batch
     start.bat
   ```
@@ -54,6 +54,7 @@ This will:
 - Start PostgreSQL container
 - Start Streamlit container
 - Set up networking between them
+- Open the app (or see point 4.)
 
 ### 4. Access the Application
 
@@ -62,7 +63,7 @@ Open your browser and go to: **http://localhost:8501**
 ## 5. Stopping the containers
 To stop the containers run
 ```bash
-sudo docker-compose down
+# docker-compose down
 ```
 
 ## Resources
