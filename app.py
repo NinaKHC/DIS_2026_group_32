@@ -1,4 +1,4 @@
-import importlib.util
+﻿import importlib.util
 import os
 import sys
 from dataclasses import dataclass
@@ -83,6 +83,14 @@ PAGE_CONFIGS: dict[str, PageConfig] = {
         folder_names=("Witness file", "Witness File", "Witnesses", "witnesses"),
         module_names=("witness_file.py", "witnesses.py"),
         function_names=("show_witnesses", "show_witness_file"),
+    ),
+
+    "witness_search": PageConfig(
+        key="witness_search",
+        title="Witness Search",
+        folder_names=("Witness file", "Witness File", "Witnesses", "witnesses"),
+        module_names=("witness_search.py",),
+        function_names=("show_witness_search",),
     ),
 
     "suspects": PageConfig(
@@ -203,13 +211,6 @@ def go_to_page(page_name: str) -> None:
 
 
 def find_page_module(config: PageConfig) -> Path | None:
-    """
-    Finder den første eksisterende Python-fil for en side.
-
-    Eksempel:
-    Access Logs/Code/access_logs.py
-    """
-
     for folder_name in config.folder_names:
         code_dir = PROJECT_ROOT / folder_name / "Code"
 
@@ -223,13 +224,6 @@ def find_page_module(config: PageConfig) -> Path | None:
 
 
 def load_page_function(config: PageConfig) -> Callable[[], None] | None:
-    """
-    Loader en sides show-funktion dynamisk.
-
-    Det betyder, at app.py ikke crasher, selvom siden ikke er lavet endnu.
-    Når filen senere bliver lavet, finder app.py den automatisk.
-    """
-
     module_path = find_page_module(config)
 
     if module_path is None:
@@ -286,20 +280,9 @@ def show_database_page() -> None:
         go_to_page("main_menu")
 
 
-def show_placeholder_page(config: PageConfig) -> None:
+def show_missing_page(config: PageConfig) -> None:
     st.title(config.title)
-    st.info("This page has not been implemented yet.")
-
-    st.write("Expected one of these files:")
-
-    for folder_name in config.folder_names:
-        for module_name in config.module_names:
-            st.code(str(PROJECT_ROOT / folder_name / "Code" / module_name))
-
-    st.write("Expected one of these functions:")
-
-    for function_name in config.function_names:
-        st.code(f"def {function_name}() -> None:")
+    st.info("This page is not available.")
 
     if st.button("Back to Main Menu"):
         go_to_page("main_menu")
@@ -320,7 +303,7 @@ def show_page(page_name: str) -> None:
     page_function = load_page_function(config)
 
     if page_function is None:
-        show_placeholder_page(config)
+        show_missing_page(config)
         return
 
     page_function()

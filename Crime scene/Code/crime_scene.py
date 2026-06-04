@@ -1,4 +1,4 @@
-import base64
+﻿import base64
 import sys
 import re
 from pathlib import Path
@@ -101,7 +101,6 @@ def show_crime_scene() -> None:
 
     total_pictures = len(crime_scene_pictures)
 
-    # Use session_state for index instead of query params
     if "crime_scene_index" not in st.session_state:
         st.session_state.crime_scene_index = 0
 
@@ -140,8 +139,6 @@ def show_crime_scene() -> None:
         </div>
         """
 
-    # Build the arrow buttons — crime_scene.py controls what they do (onclick),
-    # screen_arrows.py provides the image and base styling.
     left_arrow_html = make_screen_arrow_button(
         direction="left",
         onclick="navigate('prev')",
@@ -175,7 +172,6 @@ def show_crime_scene() -> None:
             display: none !important;
         }
 
-        /* Hide the invisible navigation buttons */
         #cs-nav-anchor,
         #cs-nav-anchor + div {
             display: none !important;
@@ -289,7 +285,6 @@ def show_crime_scene() -> None:
 
         {back_btn_css}
 
-        /* Positioning for the crime scene arrows.
            Base button styling (image, hover effect, etc.) comes from screen_arrow_css(). */
         {screen_arrow_css()}
 
@@ -326,8 +321,8 @@ def show_crime_scene() -> None:
 
     <body>
         <div class="crime-scene-page">
-            {back_btn_html}
             <div class="crime-scene-stage">
+                {back_btn_html}
 
                 <img
                     class="crime-scene-bg"
@@ -349,15 +344,30 @@ def show_crime_scene() -> None:
         </div>
 
         <script>
+        let navigationPending = false;
         function navigate(direction) {{
-            // Find the hidden Streamlit button in the parent and click it
-            const buttons = window.parent.document.querySelectorAll('button');
-            for (const btn of buttons) {{
-                if (btn.innerText.trim() === direction) {{
-                    btn.click();
-                    return;
+            if (navigationPending) return;
+            navigationPending = true;
+
+            let attempts = 0;
+            const clickWhenReady = function() {{
+                attempts += 1;
+                const buttons = window.parent.document.querySelectorAll('button');
+                for (const btn of buttons) {{
+                    if (btn.innerText.trim() === direction && !btn.disabled) {{
+                        btn.click();
+                        return;
+                    }}
                 }}
-            }}
+
+                if (attempts < 20) {{
+                    window.setTimeout(clickWhenReady, 75);
+                }} else {{
+                    navigationPending = false;
+                }}
+            }};
+
+            window.setTimeout(clickWhenReady, 120);
         }}
         </script>
 

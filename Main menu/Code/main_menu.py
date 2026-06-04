@@ -9,6 +9,8 @@ import streamlit.components.v1 as components
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
 
 BACKGROUND_IMAGE_NAME = "Case Overview.png"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+BACK_TO_START_ASSETS_DIR = PROJECT_ROOT / "Back to start" / "Assets"
 
 MENU_BUTTONS = [
     {
@@ -67,12 +69,32 @@ MENU_BUTTONS = [
         "image": "Replay_intro.png",
         "css_class": "btn-replay-intro",
     },
+    {
+        "button_text": "mm_arrest_suspect",
+        "page": "arrest_suspect",
+        "label": "Arrest the Suspect",
+        "image": "Arrest_the_suspect.png",
+        "css_class": "btn-arrest-suspect",
+    },
+    {
+        "button_text": "mm_start_screen",
+        "page": "start_screen",
+        "label": "Exit to Start",
+        "image": "Exit_to_start.png",
+        "css_class": "btn-exit-main-menu",
+    },
 ]
 
 
 def image_to_base64(image_path: Path) -> str:
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode()
+
+
+def get_image_aspect_ratio(image_path: Path) -> float:
+    with Image.open(image_path) as img:
+        image_width, image_height = img.size
+    return image_width / image_height
 
 
 def find_first_image(assets_dir: Path) -> Path:
@@ -94,6 +116,8 @@ def build_menu_buttons_html(assets_dir: Path) -> str:
 
     for button in MENU_BUTTONS:
         image_path = assets_dir / button["image"]
+        if not image_path.exists():
+            image_path = BACK_TO_START_ASSETS_DIR / button["image"]
         if not image_path.exists():
             continue
 
@@ -125,9 +149,7 @@ def show_main_menu() -> None:
     background_b64 = image_to_base64(background_path)
     menu_buttons_html = build_menu_buttons_html(assets_dir)
 
-    with Image.open(background_path) as img:
-        image_width, image_height = img.size
-    aspect_ratio = image_width / image_height
+    aspect_ratio = get_image_aspect_ratio(background_path)
 
     st.markdown(
         """
@@ -245,39 +267,44 @@ def show_main_menu() -> None:
         .btn-suspects      {{ left: 45.2%; top: 7.8%; width: 14.0%; height: 24.9%; }}
         .btn-stolen-items  {{ left: 28.5%; top: 60.0%; width: 17.5%; height: 25.5%; }}
         .btn-locations     {{ left: 45.0%; top: 70.0%; width: 17.5%; height: 25.5%; }}
-        .btn-access-logs   {{ left: 53.3%; top: 41.0%; width: 12.4%; height: 31.0%; }}
+        .btn-access-logs   {{ left: 59.3%; top: 36.0%; width: 12.4%; height: 31.0%; }}
         .btn-replay-intro  {{ left: 60.0%; top: 10.0%; width: 15.5%; height: 23.0%; }}
-
-        .case-click-zone {{
-            position: absolute;
-            display: block;
-            background: transparent;
-            cursor: pointer;
-            z-index: 5;
-        }}
-
-        .zone-arrest-suspect {{ left: 81.2%; top: 43.0%; width: 13.5%; height: 19.0%; }}
-        .zone-exit-main-menu {{ left: 65.2%; top: 69.0%; width: 10.8%; height: 17.0%; }}
+        .btn-arrest-suspect {{ left: 76.5%; top: 32.0%; width: 20.0%; height: 30.5%; }}
+        .btn-exit-main-menu  {{ left: 62.8%; top: 66.2%; width: 15.5%; height: 23.0%; }}
         </style>
     </head>
     <body>
         <div class="mm-page">
             <div class="menu-stage">
                 {menu_buttons_html}
-                <div class="case-click-zone zone-arrest-suspect"     onclick="navigate('mm_arrest_suspect')"     role="button" aria-label="Arrest the Suspect"></div>
-                <div class="case-click-zone zone-exit-main-menu"     onclick="navigate('mm_start_screen')"       role="button" aria-label="Exit to Start Screen"></div>
             </div>
         </div>
 
         <script>
+        let navigationPending = false;
         function navigate(page) {{
-            var buttons = window.parent.document.querySelectorAll('button');
-            for (var i = 0; i < buttons.length; i++) {{
-                if (buttons[i].innerText.trim() === page) {{
-                    buttons[i].click();
-                    return;
+            if (navigationPending) return;
+            navigationPending = true;
+
+            let attempts = 0;
+            const clickWhenReady = function() {{
+                attempts += 1;
+                var buttons = window.parent.document.querySelectorAll('button');
+                for (var i = 0; i < buttons.length; i++) {{
+                    if (buttons[i].innerText.trim() === page && !buttons[i].disabled) {{
+                        buttons[i].click();
+                        return;
+                    }}
                 }}
-            }}
+
+                if (attempts < 20) {{
+                    window.setTimeout(clickWhenReady, 75);
+                }} else {{
+                    navigationPending = false;
+                }}
+            }};
+
+            window.setTimeout(clickWhenReady, 120);
         }}
         </script>
     </body>
@@ -287,10 +314,6 @@ def show_main_menu() -> None:
     components.html(html, height=1, scrolling=False)
 
     destinations = [(button["button_text"], button["page"]) for button in MENU_BUTTONS]
-    destinations.extend([
-        ("mm_arrest_suspect", "arrest_suspect"),
-        ("mm_start_screen", "start_screen"),
-    ])
 
     cols = st.columns(len(destinations))
     for col, (btn_text, page) in zip(cols, destinations):
@@ -302,6 +325,5 @@ def show_main_menu() -> None:
                 st.rerun()
 
 
-# Bagudkompatibilitet
 def show_case_overview() -> None:
     show_main_menu()

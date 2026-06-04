@@ -1,4 +1,4 @@
-# Streamlit + PostgreSQL Docker Setup
+﻿# Streamlit + PostgreSQL Docker Setup
 
 This project uses Docker and Docker Compose to run a Streamlit application with a PostgreSQL database.
 

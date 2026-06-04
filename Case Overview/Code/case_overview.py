@@ -4,6 +4,7 @@ from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
+from PIL import Image
 
 
 SUPPORTED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
@@ -20,6 +21,12 @@ from back_to_main_menu import get_back_button_css, get_back_button_html, render_
 def image_to_base64(image_path: Path) -> str:
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode()
+
+
+def get_aspect_ratio(image_path: Path) -> float:
+    with Image.open(image_path) as image:
+        width, height = image.size
+    return width / height
 
 
 def find_first_asset_image() -> Path:
@@ -47,6 +54,7 @@ def find_first_asset_image() -> Path:
 def show_case_overview() -> None:
     background_path = find_first_asset_image()
     background_b64 = image_to_base64(background_path)
+    aspect_ratio = get_aspect_ratio(background_path)
 
     back_btn_html = get_back_button_html(btn_key="co_back")
     back_btn_css = get_back_button_css(left="1.2%", top="2.0%", width="16%")
@@ -119,11 +127,29 @@ def show_case_overview() -> None:
         .co-page {{
             width: 100vw;
             height: 100vh;
-            background-image: url("data:image/png;base64,{background_b64}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1c0f08;
+            overflow: hidden;
+        }}
+
+        .co-stage {{
             position: relative;
+            width: min(100vw, calc(100vh * {aspect_ratio}));
+            aspect-ratio: {aspect_ratio};
+            overflow: hidden;
+        }}
+
+        .co-bg {{
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 1;
+            pointer-events: none;
+            user-select: none;
         }}
 
         {back_btn_css}
@@ -131,18 +157,37 @@ def show_case_overview() -> None:
     </head>
     <body>
         <div class="co-page">
-            {back_btn_html}
+            <div class="co-stage">
+                {back_btn_html}
+                <img class="co-bg" src="data:image/png;base64,{background_b64}" alt="Case overview">
+            </div>
         </div>
 
         <script>
+        let navigationPending = false;
         function navigate(page) {{
-            var buttons = window.parent.document.querySelectorAll('button');
-            for (var i = 0; i < buttons.length; i++) {{
-                if (buttons[i].innerText.trim() === page) {{
-                    buttons[i].click();
-                    return;
+            if (navigationPending) return;
+            navigationPending = true;
+
+            let attempts = 0;
+            const clickWhenReady = function() {{
+                attempts += 1;
+                var buttons = window.parent.document.querySelectorAll('button');
+                for (var i = 0; i < buttons.length; i++) {{
+                    if (buttons[i].innerText.trim() === page && !buttons[i].disabled) {{
+                        buttons[i].click();
+                        return;
+                    }}
                 }}
-            }}
+
+                if (attempts < 20) {{
+                    window.setTimeout(clickWhenReady, 75);
+                }} else {{
+                    navigationPending = false;
+                }}
+            }};
+
+            window.setTimeout(clickWhenReady, 120);
         }}
         </script>
     </body>
@@ -152,7 +197,3 @@ def show_case_overview() -> None:
     components.html(html, height=1, scrolling=False)
 
     render_back_button_streamlit(btn_key="co_back", target_page="main_menu")
-
-
-def show_case_overview_detail() -> None:
-    show_case_overview()

@@ -15,9 +15,6 @@ def _get_image_path() -> Path:
 
 
 def get_back_button_css(left: str = "1.2%", top: str = "2%", width: str = "16%") -> str:
-    """
-    Returnerer CSS til back-knappen til brug INDE I en components.html() iframe.
-    """
     return f"""
     .back-btn-overlay {{
         position: absolute;
@@ -45,11 +42,6 @@ def get_back_button_css(left: str = "1.2%", top: str = "2%", width: str = "16%")
 
 
 def get_back_button_html(btn_key: str = "back_btn") -> str:
-    """
-    Returnerer HTML til back-knappen til brug INDE I en components.html() iframe.
-    btn_key skal matche den tekst der bruges i det skjulte st.button() kald udenfor iframe'en.
-    Kalder navigate(btn_key) — sørg for at navigate()-funktionen er defineret i iframens JS.
-    """
     image_path = _get_image_path()
 
     if not image_path.exists():
@@ -65,10 +57,6 @@ def get_back_button_html(btn_key: str = "back_btn") -> str:
 
 
 def render_back_button_streamlit(btn_key: str, target_page: str) -> None:
-    """
-    Rendrer det skjulte Streamlit st.button() der håndterer navigation.
-    Kaldes udenfor iframe'en — matcher btn_key i get_back_button_html().
-    """
     if st.button(btn_key, key=f"btmm_hidden_{btn_key}"):
         st.session_state["page"] = target_page
         st.rerun()

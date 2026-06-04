@@ -1,40 +1,35 @@
-import base64
 import html
 import sys
-import re 
 from pathlib import Path
 
-from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
 
 
-project_root = Path(__file__).resolve().parents[2]
-back_button_code_dir = project_root / "Back to main menu" / "Code"
-screen_arrows_code_dir = project_root / "Screen arrows" / "Code"
-witness_button_code_dir = project_root / "Witness shortcut" / "Code"
-witness_file_code_dir = project_root / "Witness file" / "Code"
-database_code_dir = project_root / "Database" / "Code"
+shared_code_dir = Path(__file__).resolve().parents[2] / "Shared" / "Code"
+if str(shared_code_dir) not in sys.path:
+    sys.path.append(str(shared_code_dir))
 
-if str(back_button_code_dir) not in sys.path:
-    sys.path.append(str(back_button_code_dir))
-if str(screen_arrows_code_dir) not in sys.path:
-    sys.path.append(str(screen_arrows_code_dir))
-if str(witness_file_code_dir) not in sys.path:
-    sys.path.append(str(witness_file_code_dir))
-if str(database_code_dir) not in sys.path:
-    sys.path.append(str(database_code_dir))
+from path_helpers import PROJECT_ROOT, add_code_paths, assets_dir, code_dir
+from ui_helpers import cached_image_to_base64, get_aspect_ratio, navigate_script, streamlit_chrome_css
+
+
+witness_button_code_dir = code_dir("Witness shortcut")
+
+add_code_paths(
+    code_dir("Back to main menu"),
+    code_dir("Screen arrows"),
+    code_dir("Witness file"),
+    code_dir("Database"),
+)
 if str(witness_button_code_dir) in sys.path:
     sys.path.remove(str(witness_button_code_dir))
 sys.path.insert(0, str(witness_button_code_dir))
 
-# Streamlit keeps imported modules alive between reruns. Force this helper to
-# reload from the shared Witness shortcut folder.
 sys.modules.pop("witness_button", None)
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
 from screen_arrows import screen_arrow_css, make_screen_arrow_button
-from person_birth_details import get_person_birth_details
 from witness_button import (
     get_witness_file_button_css,
     get_witness_file_button_html,
@@ -43,44 +38,20 @@ from witness_button import (
     get_witness_overview_button_html,
     get_witness_red_button_css,
     get_witness_red_button_html,
-    get_witness_static_button_html,
+    get_witness_search_button_html,
     render_witness_file_button_streamlit,
     render_witness_overview_button_streamlit,
     render_witness_red_button_streamlit,
+    render_witness_search_button_streamlit,
 )
 from witness_overview import PERSONS
+from database_helpers import get_persons, get_suspicious_person_ids
+
+PERSONS = get_persons(PERSONS)
 
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
-
-# Tilføj mistænkte her. Felter svarende til formularen i billedet.
-# "photo" kan være en absolut sti til et billede, eller None.
-CHARS_DIR = project_root / "Characters"
-
-SQL_FILE_PATH = project_root / "database.sql"
-
-def get_alibi_directly_from_sql_text(person_id: int) -> str:
-    """Læser database.sql og sikrer, at den KUN udtager data fra Alibi-tabellen."""
-    try:
-        if not SQL_FILE_PATH.exists():
-            return f"Error: database.sql not found at {SQL_FILE_PATH}"
-            
-        with open(SQL_FILE_PATH, "r", encoding="utf-8") as f:
-            sql_content = f.read()
-            
-        # tjekke at person_id matcher, og derefter snuppe teksten.
-        pattern = rf"INSERT\s+INTO\s+Alibi\s+\([^)]*\)\s+VALUES\s*\(\s*{person_id}\s*,\s*'(.*?)'\s*\);"
-        match = re.search(pattern, sql_content)
-        
-        if match:
-            full_text = match.group(1)
-            clean_alibi = full_text.split("Statement:")[0].strip()
-            return clean_alibi
-            
-        return f"No alibi found in SQL file for person ID {person_id}."
-        
-    except Exception as e:
-        return f"Error reading SQL file: {str(e)}"
+CHARS_DIR = PROJECT_ROOT / "Characters"
 
 def _character_photo_path(person_id: int) -> str | None:
     standard_path = CHARS_DIR / f"Char_{person_id}.png"
@@ -88,13 +59,6 @@ def _character_photo_path(person_id: int) -> str | None:
     if standard_path.exists():
         return str(standard_path)
     return None
-
-
-def _short_text(text: str, limit: int = 62) -> str:
-    text = " ".join(str(text).split())
-    if len(text) <= limit:
-        return text
-    return text[: limit - 3].rstrip() + "..."
 
 
 def _line_count(text: str, chars_per_line: int = 58, max_lines: int = 3) -> int:
@@ -193,7 +157,8 @@ def _suspect_fields_html(suspect: dict) -> str:
 
 def _person_to_suspect(person: dict) -> dict:
     person_id = person.get("id", 0)
-    birth_details = get_person_birth_details(person_id)
+    age = str(person.get("age", ""))
+    date_of_birth = str(person.get("date_of_birth", ""))
     role = person.get("role", "")
     arrived = person.get("arrived", "")
     left = person.get("left", "")
@@ -208,8 +173,8 @@ def _person_to_suspect(person: dict) -> dict:
         "id": person_id,
         "full_name": person.get("name", ""),
         "occupation": role,
-        "age": birth_details["age"],
-        "date_of_birth": birth_details["date_of_birth"],
+        "age": age,
+        "date_of_birth": date_of_birth,
         "personal_characteristics": appearance,
         "clothing": person.get("clothing", ""),
         "distinguishing_features": (
@@ -220,19 +185,20 @@ def _person_to_suspect(person: dict) -> dict:
         "relationship_to_case": f"{role}; present near case timeline",
         "reason_for_suspicion": "Flagged in Witness Overview",
         "connection_to_case": f"Presence log: {arrived} - {left}",
-        "alibi": get_alibi_directly_from_sql_text(person_id),
+        "alibi": person.get("alibi", ""),
         "photo": _character_photo_path(person_id),
     }
 
 
-# Backwards compatibility for pages that import SUSPECTS directly, such as
-# Arrest person. The suspects page itself filters this through
-# get_marked_suspects().
 SUSPECTS = [_person_to_suspect(person) for person in PERSONS]
 
 
 def get_marked_suspects() -> list[dict]:
-    suspicious_ids = st.session_state.get("wo_suspicious", set())
+    suspicious_ids = set(st.session_state.get("wo_suspicious", set()))
+    if not suspicious_ids:
+        suspicious_ids = get_suspicious_person_ids(st.session_state.get("game_number", 0))
+        if suspicious_ids:
+            st.session_state.wo_suspicious = suspicious_ids
 
     if not suspicious_ids:
         return [
@@ -258,11 +224,6 @@ def get_marked_suspects() -> list[dict]:
         for person in PERSONS
         if person.get("id") in suspicious_ids
     ]
-
-
-def image_to_base64(image_path: Path) -> str:
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode()
 
 
 def find_background_image(assets_dir: Path) -> Path:
@@ -293,33 +254,30 @@ def show_suspects() -> None:
     suspect_tab_css = get_witness_red_button_css(
         css_class="witness-red-tab",
         left="82.9%",
-        top="11.6%",
+        top="7.6%",
         selected=True,
     )
-    witness_green_tab_html = get_witness_static_button_html(
+    witness_green_tab_html = get_witness_search_button_html(
+        btn_key="sp_tab_search",
         css_class="witness-green-tab",
-        label="Witness shortcut green",
+        label="Witness Search",
     )
     witness_green_tab_css = get_witness_green_button_css(
         css_class="witness-green-tab",
         left="82.9%",
-        top="65.8%",
+        top="68.3%",
     )
 
-    feature_dir = Path(__file__).resolve().parents[1]
-    assets_dir = feature_dir / "Assets"
+    page_assets_dir = assets_dir(__file__)
 
     try:
-        background_path = find_background_image(assets_dir)
+        background_path = find_background_image(page_assets_dir)
     except FileNotFoundError as error:
         st.error(str(error))
         st.stop()
 
-    background_b64 = image_to_base64(background_path)
-
-    with Image.open(background_path) as img:
-        img_width, img_height = img.size
-    aspect_ratio = img_width / img_height
+    background_b64 = cached_image_to_base64(background_path)
+    aspect_ratio = get_aspect_ratio(background_path)
 
     suspects = get_marked_suspects()
     total_suspects = len(suspects)
@@ -348,7 +306,7 @@ def show_suspects() -> None:
     if suspect.get("photo"):
         photo_path = Path(suspect["photo"])
         if photo_path.exists():
-            photo_b64 = image_to_base64(photo_path)
+            photo_b64 = cached_image_to_base64(photo_path)
             photo_html = f"""
             <img
                 class="suspect-photo"
@@ -359,50 +317,7 @@ def show_suspects() -> None:
 
     suspect_fields_html = _suspect_fields_html(suspect)
 
-    st.markdown(
-        """
-        <style>
-        html, body, .stApp {
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
-            background: #3a1f0f !important;
-        }
-        [data-testid="stHeader"] {
-            background: rgba(0, 0, 0, 0) !important;
-            height: 0rem !important;
-        }
-        [data-testid="stToolbar"],
-        [data-testid="stDecoration"] {
-            display: none !important;
-        }
-        .block-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-            height: 100vh !important;
-            overflow: hidden !important;
-        }
-        section.main,
-        div[data-testid="stAppViewContainer"],
-        div[data-testid="stVerticalBlock"] {
-            overflow: hidden !important;
-        }
-        iframe {
-            width: 100vw !important;
-            height: 100vh !important;
-            display: block !important;
-            border: none !important;
-        }
-        .element-container:has(iframe) {
-            width: 100vw !important;
-            height: 100vh !important;
-            overflow: hidden !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(streamlit_chrome_css(background="#3a1f0f"), unsafe_allow_html=True)
 
     html = f"""
     <!DOCTYPE html>
@@ -446,7 +361,6 @@ def show_suspects() -> None:
             pointer-events: none;
         }}
 
-        /* Mistænkt-foto vises oven på siluet-pladsen på venstre side */
         .suspect-photo {{
             position: absolute;
             left: 19.9%;
@@ -458,7 +372,6 @@ def show_suspects() -> None:
             pointer-events: none;
         }}
 
-        /* Feltværdier på højre side */
         .suspect-fields {{
             position: absolute;
             left: 52.0%;
@@ -631,8 +544,8 @@ def show_suspects() -> None:
     </head>
     <body>
         <div class="suspect-page">
-            {back_btn_html}
             <div class="suspect-stage">
+                {back_btn_html}
 
                 <img
                     class="suspect-bg"
@@ -662,17 +575,7 @@ def show_suspects() -> None:
             </div>
         </div>
 
-        <script>
-        function navigate(direction) {{
-            const buttons = window.parent.document.querySelectorAll('button');
-            for (const btn of buttons) {{
-                if (btn.innerText.trim() === direction) {{
-                    btn.click();
-                    return;
-                }}
-            }}
-        }}
-        </script>
+        {navigate_script()}
     </body>
     </html>
     """
@@ -683,6 +586,7 @@ def show_suspects() -> None:
     render_witness_overview_button_streamlit(btn_key="sp_tab_overview", target_page="witnesses")
     render_witness_file_button_streamlit(btn_key="sp_tab_file", target_page="witness_file")
     render_witness_red_button_streamlit(btn_key="sp_tab_suspects", target_page="suspects")
+    render_witness_search_button_streamlit(btn_key="sp_tab_search", target_page="witness_search")
 
     col_prev, col_next = st.columns(2)
     with col_prev:

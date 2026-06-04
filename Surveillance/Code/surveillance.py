@@ -1,4 +1,4 @@
-import base64
+﻿import base64
 import sys
 from pathlib import Path
 
@@ -22,27 +22,20 @@ from screen_arrows import screen_arrow_css, make_screen_arrow_button
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
 
-# ── Overvågningsbilleder ──────────────────────────────────────────────────────
-# 5 slots i alt — svarende til de 5 fotopladser i billedet.
-# "image_filename" skal være filnavnet i Assets-mappen, eller None.
 SURVEILLANCE = [
-    {"label": "Kamera 1",  "image_filename": None},
-    {"label": "Kamera 2",  "image_filename": None},
-    {"label": "Kamera 3",  "image_filename": None},
-    {"label": "Kamera 4",  "image_filename": None},
-    {"label": "Kamera 5",  "image_filename": None},
+    {"label": "Camera 1", "image_filename": None},
+    {"label": "Camera 2", "image_filename": None},
+    {"label": "Camera 3", "image_filename": None},
+    {"label": "Camera 4", "image_filename": None},
+    {"label": "Camera 5", "image_filename": None},
 ]
-# ─────────────────────────────────────────────────────────────────────────────
 
-# Bokspositioner (left%, top%, width%, height%) på Surveillance folder.png
-# Øverste række: 2 store landskabsbilleder
-# Nederste række: 3 mindre kvadratiske billeder
 SLOT_POSITIONS = [
-    (33.0,  8.0, 26.5, 44.0),   # Slot 0 — øverst venstre  (rød pin)
-    (62.0,  8.0, 26.5, 42.0),   # Slot 1 — øverst højre    (blå pin)
-    (31.0, 56.0, 17.5, 36.0),   # Slot 2 — nederst venstre (grøn pin)
-    (51.0, 56.0, 17.5, 36.0),   # Slot 3 — nederst midten  (gul pin)
-    (70.5, 56.0, 17.5, 36.0),   # Slot 4 — nederst højre   (orange pin)
+    (33.0, 8.0, 26.5, 44.0),
+    (62.0, 8.0, 26.5, 42.0),
+    (31.0, 56.0, 17.5, 36.0),
+    (51.0, 56.0, 17.5, 36.0),
+    (70.5, 56.0, 17.5, 36.0),
 ]
 
 
@@ -77,14 +70,30 @@ def _streamlit_chrome_css() -> str:
 def _navigate_js() -> str:
     return """
     <script>
+    let navigationPending = false;
     function navigate(page) {
-        var buttons = window.parent.document.querySelectorAll('button');
-        for (var i = 0; i < buttons.length; i++) {
-            if (buttons[i].innerText.trim() === page) {
-                buttons[i].click();
-                return;
+        if (navigationPending) return;
+        navigationPending = true;
+
+        let attempts = 0;
+        const clickWhenReady = function() {
+            attempts += 1;
+            var buttons = window.parent.document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {
+                if (buttons[i].innerText.trim() === page && !buttons[i].disabled) {
+                    buttons[i].click();
+                    return;
+                }
             }
-        }
+
+            if (attempts < 20) {
+                window.setTimeout(clickWhenReady, 75);
+            } else {
+                navigationPending = false;
+            }
+        };
+
+        window.setTimeout(clickWhenReady, 120);
     }
     </script>
     """
@@ -93,7 +102,7 @@ def _navigate_js() -> str:
 def _render_overview(back_btn_html: str, back_btn_css: str) -> None:
     bg_path = ASSETS_DIR / "Surveillance folder.png"
     if not bg_path.exists():
-        st.error(f"Baggrundsbillede ikke fundet: {bg_path}")
+        st.error(f"Background image not found: {bg_path}")
         st.stop()
 
     bg_b64 = image_to_base64(bg_path)
@@ -189,8 +198,8 @@ def _render_overview(back_btn_html: str, back_btn_css: str) -> None:
     </head>
     <body>
         <div class="sv-page">
-            {back_btn_html}
             <div class="sv-stage">
+                {back_btn_html}
                 <img class="sv-bg" src="data:image/png;base64,{bg_b64}" alt="Surveillance folder">
                 {slots_html}
             </div>
@@ -227,13 +236,13 @@ def _render_zoom(
         direction="left",
         onclick="navigate('prev')",
         css_class="sv-arrow-left",
-        aria_label="Forrige billede",
+        aria_label="Previous image",
     )
     right_arrow = make_screen_arrow_button(
         direction="right",
         onclick="navigate('next')",
         css_class="sv-arrow-right",
-        aria_label="Næste billede",
+        aria_label="Next image",
     )
 
     counter_text = f"{current_index + 1} / {num_items}"
@@ -264,7 +273,6 @@ def _render_zoom(
             aspect-ratio: {aspect_ratio};
         }}
 
-        /* Udtoner baggrunden i zoom-tilstand */
         .sv-bg {{
             position: absolute;
             inset: 0; width: 100%; height: 100%;
@@ -275,7 +283,6 @@ def _render_zoom(
             filter: brightness(0.25);
         }}
 
-        /* Mørkt overlay */
         .sv-overlay {{
             position: absolute;
             inset: 0;
@@ -283,7 +290,6 @@ def _render_zoom(
             z-index: 2;
         }}
 
-        /* Det zoomede billede */
         .sv-zoom-img {{
             position: absolute;
             left: 10%;
@@ -368,8 +374,8 @@ def _render_zoom(
     </head>
     <body>
         <div class="sv-page">
-            {back_btn_html}
             <div class="sv-stage">
+                {back_btn_html}
                 <img class="sv-bg" src="data:image/png;base64,{bg_b64}" alt="Surveillance folder">
                 <div class="sv-overlay"></div>
 
@@ -381,8 +387,8 @@ def _render_zoom(
                     class="sv-back-overview"
                     onclick="navigate('sv_overview')"
                     role="button"
-                    aria-label="Tilbage til oversigt">
-                    ← Oversigt
+                    aria-label="Back to overview">
+                    ← Overview
                 </div>
 
                 {left_arrow}

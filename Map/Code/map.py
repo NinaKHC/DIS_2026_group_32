@@ -1,51 +1,34 @@
-import base64
-import sys
+﻿import sys
 from pathlib import Path
 
-from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
 
 
-project_root = Path(__file__).resolve().parents[2]
-back_button_code_dir = project_root / "Back to main menu" / "Code"
+shared_code_dir = Path(__file__).resolve().parents[2] / "Shared" / "Code"
 
-if str(back_button_code_dir) not in sys.path:
-    sys.path.append(str(back_button_code_dir))
+if str(shared_code_dir) not in sys.path:
+    sys.path.append(str(shared_code_dir))
+
+from path_helpers import add_code_paths, assets_dir, code_dir
+
+add_code_paths(
+    code_dir("Back to main menu"),
+    code_dir("Database"),
+)
 
 from back_to_main_menu import get_back_button_css, get_back_button_html, render_back_button_streamlit
+from database_helpers import get_map_markers
+from ui_helpers import get_aspect_ratio, image_to_base64, navigate_script, streamlit_chrome_css
 
 
-ASSETS_DIR = Path(__file__).resolve().parents[1] / "Assets"
+ASSETS_DIR = assets_dir(__file__)
 
-# ── Lokationer ────────────────────────────────────────────────────────────────
-# Tilføj lokationer her (eller byg dem fra SQL og send dem ind som liste).
-# x og y er i procent af kortets bredde/højde (0–100).
-#
-# Eksempel:
-#   {"name": "Maison Aurora Jewelry", "x": 50.5, "y": 47.0, "color": "#cc2200"}
-#
-# Farve er valgfri — udelades den bruges standard rød.
 LOCATIONS: list[dict] = [
-    # Indsæt lokationer her, fx fra SQL:
-    # {"name": "Maison Aurora Jewelry", "x": 50.5, "y": 47.0},
 ]
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def image_to_base64(image_path: Path) -> str:
-    with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-
-def get_aspect_ratio(image_path: Path) -> float:
-    with Image.open(image_path) as img:
-        w, h = img.size
-    return w / h
 
 
 def _build_markers_html(locations: list[dict]) -> str:
-    """Laver HTML for alle markører på kortet."""
     html = ""
     for loc in locations:
         x = loc.get("x", 50)
@@ -68,7 +51,7 @@ def _build_markers_html(locations: list[dict]) -> str:
 def show_map() -> None:
     map_path = ASSETS_DIR / "city map.png"
     if not map_path.exists():
-        st.error(f"Kortbillede ikke fundet: {map_path}")
+        st.error(f"Map image not found: {map_path}")
         st.stop()
 
     map_b64 = image_to_base64(map_path)
@@ -77,23 +60,10 @@ def show_map() -> None:
     back_btn_html = get_back_button_html(btn_key="map_back")
     back_btn_css = get_back_button_css(left="1.0%", top="1.5%", width="10%")
 
-    markers_html = _build_markers_html(LOCATIONS)
+    markers_html = _build_markers_html(get_map_markers(LOCATIONS))
 
     st.markdown(
-        """
-        <style>
-        html, body, .stApp {
-            margin: 0 !important; padding: 0 !important;
-            overflow: hidden !important; background: #2a1a0a !important;
-        }
-        [data-testid="stHeader"] { background: rgba(0,0,0,0) !important; height: 0rem !important; }
-        [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
-        .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; height: 100vh !important; overflow: hidden !important; }
-        section.main, div[data-testid="stAppViewContainer"], div[data-testid="stVerticalBlock"] { overflow: hidden !important; }
-        iframe { width: 100vw !important; height: 100vh !important; display: block !important; border: none !important; }
-        .element-container:has(iframe) { width: 100vw !important; height: 100vh !important; overflow: hidden !important; }
-        </style>
-        """,
+        streamlit_chrome_css(),
         unsafe_allow_html=True,
     )
 
@@ -117,7 +87,6 @@ def show_map() -> None:
             background: #2a1a0a;
         }}
 
-        /* Kortet holder fast aspect ratio og fylder hele viewporten */
         .map-stage {{
             position: relative;
             width: min(100vw, calc(100vh * {aspect_ratio}));
@@ -134,7 +103,6 @@ def show_map() -> None:
             pointer-events: none;
         }}
 
-        /* ── Markører ────────────────────────────────────────── */
         .map-marker {{
             position: absolute;
             z-index: 10;
@@ -157,7 +125,6 @@ def show_map() -> None:
             box-shadow: 0 0 10px rgba(204,34,0,0.7);
         }}
 
-        /* Tooltip-label vises ved hover */
         .map-marker-label {{
             position: absolute;
             bottom: calc(100% + 6px);
@@ -185,24 +152,14 @@ def show_map() -> None:
     </head>
     <body>
         <div class="map-page">
-            {back_btn_html}
             <div class="map-stage">
+                {back_btn_html}
                 <img class="map-img" src="data:image/png;base64,{map_b64}" alt="City map">
                 {markers_html}
             </div>
         </div>
 
-        <script>
-        function navigate(page) {{
-            var buttons = window.parent.document.querySelectorAll('button');
-            for (var i = 0; i < buttons.length; i++) {{
-                if (buttons[i].innerText.trim() === page) {{
-                    buttons[i].click();
-                    return;
-                }}
-            }}
-        }}
-        </script>
+        {navigate_script()}
     </body>
     </html>
     """

@@ -399,15 +399,31 @@ def show_intro() -> None:
         let slidesDone = false;
         let voiceDone = false;
         let introStarted = false;
+        let navigationPending = false;
 
         function navigate(buttonText) {{
-            const buttons = window.parent.document.querySelectorAll("button");
-            for (let i = 0; i < buttons.length; i++) {{
-                if (buttons[i].innerText.trim() === buttonText) {{
-                    buttons[i].click();
-                    return;
+            if (navigationPending) return;
+            navigationPending = true;
+
+            let attempts = 0;
+            const clickWhenReady = function() {{
+                attempts += 1;
+                const buttons = window.parent.document.querySelectorAll("button");
+                for (let i = 0; i < buttons.length; i++) {{
+                    if (buttons[i].innerText.trim() === buttonText && !buttons[i].disabled) {{
+                        buttons[i].click();
+                        return;
+                    }}
                 }}
-            }}
+
+                if (attempts < 20) {{
+                    window.setTimeout(clickWhenReady, 75);
+                }} else {{
+                    navigationPending = false;
+                }}
+            }};
+
+            window.setTimeout(clickWhenReady, 120);
         }}
 
         function finishIntro() {{

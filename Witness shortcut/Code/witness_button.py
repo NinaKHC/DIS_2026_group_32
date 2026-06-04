@@ -29,9 +29,6 @@ def get_witness_button_css(
     highlight_filename: str,
     selected: bool = False,
 ) -> str:
-    """
-    CSS for an image-based witness shortcut tab inside a components.html() iframe.
-    """
     normal_url = _asset_data_url(normal_filename)
     highlight_url = _asset_data_url(highlight_filename)
     active_url = highlight_url if selected else normal_url
@@ -75,10 +72,10 @@ def get_witness_button_css(
 
 def get_witness_overview_button_css(
     css_class: str = "witness-overview-tab",
-    left: str = "84.7%",
-    top: str = "22.7%",
-    width: str = "5.2%",
-    height: str = "17.0%",
+    left: str = "83.4%",
+    top: str = "18.5%",
+    width: str = "7.8%",
+    height: str = "25.5%",
     selected: bool = False,
 ) -> str:
     return get_witness_button_css(
@@ -95,10 +92,10 @@ def get_witness_overview_button_css(
 
 def get_witness_file_button_css(
     css_class: str = "witness-file-tab",
-    left: str = "84.9%",
-    top: str = "42.8%",
-    width: str = "5.2%",
-    height: str = "17.0%",
+    left: str = "83.4%",
+    top: str = "18.5%",
+    width: str = "7.8%",
+    height: str = "25.5%",
     selected: bool = False,
 ) -> str:
     return get_witness_button_css(
@@ -115,10 +112,10 @@ def get_witness_file_button_css(
 
 def get_witness_red_button_css(
     css_class: str = "witness-red-tab",
-    left: str = "84.9%",
-    top: str = "8.6%",
-    width: str = "5.2%",
-    height: str = "17.0%",
+    left: str = "83.4%",
+    top: str = "18.5%",
+    width: str = "7.8%",
+    height: str = "25.5%",
     selected: bool = False,
 ) -> str:
     return get_witness_button_css(
@@ -135,10 +132,10 @@ def get_witness_red_button_css(
 
 def get_witness_green_button_css(
     css_class: str = "witness-green-tab",
-    left: str = "84.9%",
-    top: str = "62.8%",
-    width: str = "5.2%",
-    height: str = "17.0%",
+    left: str = "83.4%",
+    top: str = "18.5%",
+    width: str = "7.8%",
+    height: str = "25.5%",
     selected: bool = False,
 ) -> str:
     return get_witness_button_css(
@@ -173,15 +170,13 @@ def get_witness_file_button_html(
     """
 
 
-def get_witness_static_button_html(
-    css_class: str,
-    label: str,
+def get_witness_search_button_html(
+    btn_key: str = "wb_witness_search",
+    css_class: str = "witness-green-tab",
+    label: str = "Witness Search",
 ) -> str:
-    """
-    HTML for a shortcut tab that is visible but has no route yet.
-    """
     return f"""
-    <div class="{css_class}" role="button" aria-label="{label}"></div>
+    <div class="{css_class}" onclick="navigate('{btn_key}')" role="button" aria-label="{label}"></div>
     """
 
 
@@ -199,9 +194,6 @@ def render_witness_overview_button_streamlit(
     btn_key: str = "wb_witness_overview",
     target_page: str = "witnesses",
 ) -> None:
-    """
-    Hidden Streamlit button used by the yellow Witness Overview tab.
-    """
     if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
         st.session_state["page"] = target_page
         st.rerun()
@@ -211,9 +203,6 @@ def render_witness_file_button_streamlit(
     btn_key: str = "wb_witness_file",
     target_page: str = "witness_file",
 ) -> None:
-    """
-    Hidden Streamlit button used by the blue Witness File tab.
-    """
     if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
         st.session_state["page"] = target_page
         st.rerun()
@@ -223,9 +212,15 @@ def render_witness_red_button_streamlit(
     btn_key: str = "wb_suspects",
     target_page: str = "suspects",
 ) -> None:
-    """
-    Hidden Streamlit button used by the red Suspects tab.
-    """
+    if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
+        st.session_state["page"] = target_page
+        st.rerun()
+
+
+def render_witness_search_button_streamlit(
+    btn_key: str = "wb_witness_search",
+    target_page: str = "witness_search",
+) -> None:
     if st.button(btn_key, key=f"wb_hidden_{btn_key}"):
         st.session_state["page"] = target_page
         st.rerun()
