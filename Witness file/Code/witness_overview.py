@@ -1,4 +1,4 @@
-import base64
+﻿import base64
 import sys
 from pathlib import Path
 
@@ -93,16 +93,16 @@ BG_FILENAME = "Witness overview.png"
 conn = st.connection("postgresql", type="sql")
 
 num_witnesses = conn.session.execute(text("SELECT COUNT(*) FROM Person;")).first()[0]
-id = conn.session.execute(text("SELECT person_id FROM Person;")).all()
-names = conn.session.execute(text("SELECT name FROM Person;")).all()
-gender = conn.session.execute(text("SELECT gender From Person")).all()
-clothing = conn.session.execute(text("SELECT clothing FROM Person")).all()
-eyes_color = conn.session.execute(text("SELECT eye_color FROM Person")).all()
-skin_color = conn.session.execute(text("SELECT skin_color FROM Person")).all()
-role = conn.session.execute(text("SELECT role FROM Person")).all()
-hair_color = conn.session.execute(text("SELECT hair_color FROM Person")).all()
-arrivals = conn.session.execute(text("SELECT arrived_at FROM Presence ORDER BY person_id")).all()
-left = conn.session.execute(text("SELECT left_at FROM Presence ORDER BY person_id")).all()
+id = conn.session.execute(text("SELECT person_id FROM Person ORDER BY person_id;")).all()
+names = conn.session.execute(text("SELECT name FROM Person ORDER BY person_id;")).all()
+gender = conn.session.execute(text("SELECT gender From Person ORDER BY person_id;")).all()
+clothing = conn.session.execute(text("SELECT clothing FROM Person ORDER BY person_id;")).all()
+eyes_color = conn.session.execute(text("SELECT eye_color FROM Person ORDER BY person_id;")).all()
+skin_color = conn.session.execute(text("SELECT skin_color FROM Person ORDER BY person_id;")).all()
+role = conn.session.execute(text("SELECT role FROM Person ORDER BY person_id;")).all()
+hair_color = conn.session.execute(text("SELECT hair_color FROM Person ORDER BY person_id;")).all()
+arrivals = conn.session.execute(text("SELECT arrived_at FROM Presence ORDER BY person_id;")).all()
+left = conn.session.execute(text("SELECT left_at FROM Presence ORDER BY person_id;")).all()
 
 PERSONS = [{
         "id":1,
