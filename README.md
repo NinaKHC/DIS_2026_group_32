@@ -7,19 +7,6 @@ This project uses Docker and Docker Compose to run a Streamlit application with 
 - [Docker](https://www.docker.com/products/docker-desktop) installed
 - [Docker Compose](https://docs.docker.com/compose/install/) installed
 
-## Project Structure
-
-```
-.
-├── Dockerfile              # Container image for Streamlit app
-├── docker-compose.yml      # Orchestrates Streamlit + PostgreSQL
-├── .env.example            # Example environment variables
-├── .dockerignore           # Files to exclude from Docker build
-├── requirements.txt        # Python dependencies
-├── app.py                  # Main Streamlit application
-└── README.md              # This file
-```
-
 ## Setup Instructions
 
 ### 1. Clone the Repository
@@ -37,7 +24,7 @@ Copy the example environment file and customize if needed:
 cp .env.example .env
 ```
 
-Edit `.env` to change database credentials if desired:
+Edit `.env` to add database credentials fx:
 
 ```
 POSTGRES_USER=postgres
