@@ -285,85 +285,53 @@ def _parse_map_markers_from_sql_file() -> list[dict]:
     return markers
 
 
-PERSONS_QUERY = text("""
-    SELECT
-        p.person_id,
-        p.name,
-        p.gender,
-        p.hair_color,
-        p.eye_color,
-        p.skin_color,
-        p.clothing,
-        p.role,
-        p.age,
-        p.date_of_birth,
-        p.is_suspect,
-        p.truthfull,
-        p.is_in_game,
-        pr.arrived_at,
-        pr.left_at,
-        pr.was_working,
-        s.statement_text,
-        a.formatted_alibi
-    FROM Person p
-    LEFT JOIN Presence pr ON pr.person_id = p.person_id
-    LEFT JOIN Statement s ON s.person_id = p.person_id
-    LEFT JOIN Alibi a ON a.person_id = p.person_id
-    ORDER BY p.person_id
-""")
-
-
-def _person_from_database_row(row: Any) -> dict:
-    (
-        person_id,
-        name,
-        gender,
-        hair_color,
-        eye_color,
-        skin_color,
-        clothing,
-        role,
-        age,
-        date_of_birth,
-        is_suspect,
-        truthfull,
-        is_in_game,
-        arrived_at,
-        left_at,
-        was_working,
-        statement_text,
-        formatted_alibi,
-    ) = row
-
-    return {
-        "id": person_id,
-        "name": name or "",
-        "gender": _clean_label(gender),
-        "hair": _clean_label(hair_color),
-        "eyes": _clean_label(eye_color),
-        "skin": _clean_label(skin_color),
-        "clothing": clothing or "",
-        "role": _clean_label(role),
-        "age": str(age or ""),
-        "date_of_birth": _format_date(date_of_birth),
-        "is_suspect": bool(is_suspect),
-        "truthfull": bool(truthfull),
-        "is_in_game": bool(is_in_game),
-        "arrived": _format_time(arrived_at),
-        "left": _format_time(left_at),
-        "works_here": bool(was_working),
-        "statement": statement_text or "",
-        "alibi": _extract_alibi_text(formatted_alibi),
-    }
-
-
 @st.cache_data(ttl=60)
 def fetch_persons_from_database() -> list[dict]:
-    _ensure_person_game_column()
-    with _engine().connect() as connection:
-        rows = connection.execute(PERSONS_QUERY).fetchall()
-    return [_person_from_database_row(row) for row in rows]
+    num_witnesses = conn.session.execute(text("SELECT COUNT(*) FROM Person;")).first()[0]
+    id = conn.session.execute(text("SELECT person_id FROM Person ORDER BY person_id;")).all()
+    names = conn.session.execute(text("SELECT name FROM Person ORDER BY person_id;")).all()
+    gender = conn.session.execute(text("SELECT gender From Person ORDER BY person_id;")).all()
+    clothing = conn.session.execute(text("SELECT clothing FROM Person ORDER BY person_id;")).all()
+    eyes_color = conn.session.execute(text("SELECT eye_color FROM Person ORDER BY person_id;")).all()
+    skin_color = conn.session.execute(text("SELECT skin_color FROM Person ORDER BY person_id;")).all()
+    role = conn.session.execute(text("SELECT role FROM Person ORDER BY person_id;")).all()
+    hair_color = conn.session.execute(text("SELECT hair_color FROM Person ORDER BY person_id;")).all()
+    arrivals = conn.session.execute(text("SELECT arrived_at FROM Presence ORDER BY person_id;")).all()
+    left = conn.session.execute(text("SELECT left_at FROM Presence ORDER BY person_id;")).all()
 
+    PERSONS = [{
+            "id":-1,
+            "name": "",
+            "gender": "",
+            "clothing": "",
+            "hair": "",
+            "eyes": "",
+            "skin": "",
+            "role":"",
+            "arrived": "",
+            "left": "",
+            "hair": "",
+            "statement": "",
+            "alibi": _extract_alibi_text(formatted_alibi)
+        } for x in range(num_witnesses)]
+
+    for i in range(num_witnesses):
+        PERSONS[id[i][0] - 1]["id"] = id[i][0]
+        PERSONS[id[i][0] - 1]["name"] = names[i][0]
+        PERSONS[id[i][0] - 1]["gender"] = gender[i][0]
+        PERSONS[id[i][0] - 1]["clothing"] = clothing[i][0]
+        PERSONS[id[i][0] - 1]["eyes"] = eyes_color[i][0]
+        PERSONS[id[i][0] - 1]["skin"] = skin_color[i][0]
+        PERSONS[id[i][0] - 1]["hair"] = hair_color[i][0]
+        PERSONS[id[i][0] - 1]["role"] = role[i][0]
+        PERSONS[id[i][0] - 1]["arrived"] = arrivals[id[i][0] - 1][0].strftime("%X")
+        PERSONS[id[i][0] - 1]["left"] = left[id[i][0] - 1][0].strftime("%X")
+    return PERSONS
+
+def get_person(persons: list[dict], id: int) -> dict:
+    for p in persons:
+        if p["id"] == id:
+            return p
 
 def get_persons(fallback: list[dict] | None = None) -> list[dict]:
     try:

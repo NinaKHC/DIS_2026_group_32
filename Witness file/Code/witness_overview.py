@@ -68,6 +68,7 @@ try:
         get_stolen_items,
         get_suspicious_person_ids,
         set_suspicious_flag,
+        get_person
     )
 except ImportError:
     def get_persons(fallback: list[dict] | None = None) -> list[dict]:
@@ -88,47 +89,6 @@ except ImportError:
 ASSETS_DIR = assets_dir(__file__)
 CHARS_DIR = PROJECT_ROOT / "Characters"
 BG_FILENAME = "Witness overview.png"
-
-conn = st.connection("postgresql", type="sql")
-
-num_witnesses = conn.session.execute(text("SELECT COUNT(*) FROM Person;")).first()[0]
-id = conn.session.execute(text("SELECT person_id FROM Person ORDER BY person_id;")).all()
-names = conn.session.execute(text("SELECT name FROM Person ORDER BY person_id;")).all()
-gender = conn.session.execute(text("SELECT gender From Person ORDER BY person_id;")).all()
-clothing = conn.session.execute(text("SELECT clothing FROM Person ORDER BY person_id;")).all()
-eyes_color = conn.session.execute(text("SELECT eye_color FROM Person ORDER BY person_id;")).all()
-skin_color = conn.session.execute(text("SELECT skin_color FROM Person ORDER BY person_id;")).all()
-role = conn.session.execute(text("SELECT role FROM Person ORDER BY person_id;")).all()
-hair_color = conn.session.execute(text("SELECT hair_color FROM Person ORDER BY person_id;")).all()
-arrivals = conn.session.execute(text("SELECT arrived_at FROM Presence ORDER BY person_id;")).all()
-left = conn.session.execute(text("SELECT left_at FROM Presence ORDER BY person_id;")).all()
-
-PERSONS = [{
-        "id":1,
-        "name": "",
-        "gender": "",
-        "clothing": "",
-        "hair": "",
-        "eyes": "",
-        "skin": "",
-        "role":"todo",
-        "arrived": "",
-        "left": "",
-        "hair": "",
-        "statement": "unimplemented"
-    } for x in range(num_witnesses)]
-
-for i in range(num_witnesses):
-    PERSONS[id[i][0] - 1]["id"] = id[i][0]
-    PERSONS[id[i][0] - 1]["name"] = names[i][0]
-    PERSONS[id[i][0] - 1]["gender"] = gender[i][0]
-    PERSONS[id[i][0] - 1]["clothing"] = clothing[i][0]
-    PERSONS[id[i][0] - 1]["eyes"] = eyes_color[i][0]
-    PERSONS[id[i][0] - 1]["skin"] = skin_color[i][0]
-    PERSONS[id[i][0] - 1]["hair"] = hair_color[i][0]
-    PERSONS[id[i][0] - 1]["role"] = role[i][0]
-    PERSONS[id[i][0] - 1]["arrived"] = arrivals[id[i][0] - 1][0].strftime("%X")
-    PERSONS[id[i][0] - 1]["left"] = left[id[i][0] - 1][0].strftime("%X")
     
 def _save_suspicious_flag(person_id: int, is_suspicious: bool) -> None:
     set_suspicious_flag(
@@ -336,7 +296,7 @@ def show_witness_overview() -> None:
 
     selected_id    = st.session_state.wo_selected
     suspicious_ids = st.session_state.wo_suspicious
-    person         = game_persons[selected_id]
+    person         = get_person(game_persons, selected_id)
 
     l = LAYOUT
     list_rows = _build_list_html(selected_id, suspicious_ids, game_persons)
