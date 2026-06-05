@@ -21,11 +21,26 @@ SHOW_DATABASE_ERRORS = os.getenv("SHOW_DATABASE_ERRORS", "").lower() in {"1", "t
 
 @st.cache_resource
 def _engine():
-    return create_engine(DATABASE_URL)
+    return create_engine(
+        DATABASE_URL,
+        connect_args={
+            "connect_timeout": 5,
+            "options": "-c statement_timeout=5000",
+        },
+    )
 
 
 def _ensure_person_game_column() -> None:
     with _engine().begin() as connection:
+        connection.execute(text("""
+            ALTER TABLE Person
+            ADD COLUMN IF NOT EXISTS truthfull BOOLEAN DEFAULT TRUE
+        """))
+        connection.execute(text("""
+            UPDATE Person
+            SET truthfull = TRUE
+            WHERE truthfull IS NULL
+        """))
         connection.execute(text("""
             ALTER TABLE Person
             ADD COLUMN IF NOT EXISTS is_in_game BOOLEAN DEFAULT FALSE
@@ -728,6 +743,7 @@ def set_guilty_suspect_flag(person_id: int) -> None:
 
 def reset_truthfull_flags() -> None:
     try:
+        _ensure_person_game_column()
         with _engine().begin() as connection:
             connection.execute(RESET_TRUTHFULL_FLAGS_QUERY)
         clear_person_data_caches()
@@ -737,6 +753,7 @@ def reset_truthfull_flags() -> None:
 
 def set_untruthful_flags(person_ids: list[int]) -> None:
     try:
+        _ensure_person_game_column()
         with _engine().begin() as connection:
             if person_ids:
                 connection.execute(SET_UNTRUTHFUL_FLAGS_QUERY, {"person_ids": person_ids})
