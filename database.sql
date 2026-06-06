@@ -37,14 +37,6 @@ CREATE TABLE Alibi (
         REFERENCES Person(person_id)
 );
 
-CREATE TABLE Alibi (
-    person_id INTEGER PRIMARY KEY,
-    formatted_alibi VARCHAR(700),
-
-    FOREIGN KEY (person_id)
-        REFERENCES Person(person_id)
-);
-
 CREATE TABLE Presence (
     presence_id INTEGER PRIMARY KEY,
     person_id INTEGER,
