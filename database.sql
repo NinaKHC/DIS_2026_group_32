@@ -173,6 +173,8 @@ INSERT INTO Person VALUES
  'mediumbrown',
  'blue blazer, white blouse, grey trousers, brown shoes, gold jewelry',
  'Investigator',
+  34,
+ '1992-02-14',
  FALSE,
  TRUE,
  FALSE
@@ -186,6 +188,8 @@ INSERT INTO Person VALUES
  'darkbrown',
  'green shirt, brown t-shirt, black apron, brown pants, black sneakers',
  'Cafe employee',
+  29,
+ '1996-08-03',
  FALSE,
  TRUE,
  FALSE
@@ -199,6 +203,8 @@ INSERT INTO Person VALUES
  'fair',
  'grey cardigan, yellow scarf, red trousers, glasses, brown shoes, staff lanyard',
  'Bookstore employee',
+  31,
+ '1994-11-19',
  FALSE,
  TRUE,
  FALSE
@@ -212,6 +218,8 @@ INSERT INTO Person VALUES
  'lightbrown',
  'striped shirt, brown apron, dark trousers, green beanie, brown boots',
  'Bakery employee',
+  42,
+ '1984-04-27',
  FALSE,
  TRUE,
  FALSE
@@ -225,6 +233,8 @@ INSERT INTO Person VALUES
  'olive',
  'white blouse, green apron, red skirt, brown boots',
  'Florist employee',
+  38,
+ '1987-06-09',
  FALSE,
  TRUE,
  FALSE
@@ -238,6 +248,8 @@ INSERT INTO Person VALUES
  'tan',
  'red shirt, black t-shirt, brown pants, brown bag, sneakers',
  'Witness',
+  35,
+ '1991-01-22',
  FALSE,
  TRUE,
  FALSE
@@ -251,6 +263,8 @@ INSERT INTO Person VALUES
  'fair',
  'grey beanie, blue vest, white sweater, black skirt, sneakers',
  'Customer',
+  24,
+ '2001-09-16',
  FALSE,
  TRUE,
  FALSE
@@ -264,6 +278,8 @@ INSERT INTO Person VALUES
  'darkbrown',
  'orange jacket, black top, blue jeans, black boots',
  'Customer',
+  27,
+ '1999-03-30',
  FALSE,
  TRUE,
  FALSE
@@ -277,6 +293,8 @@ INSERT INTO Person VALUES
  'olive',
  'grey shirt, black top, brown pants, black sneakers',
  'Customer',
+  33,
+ '1992-12-05',
  FALSE,
  TRUE,
  FALSE
@@ -290,6 +308,8 @@ INSERT INTO Person VALUES
  'mediumbrown',
  'green jacket, white sweater, black pants, green sneakers',
  'Customer',
+ 40,
+ '1985-07-11',
  FALSE,
  TRUE,
  FALSE
@@ -303,6 +323,8 @@ INSERT INTO Person VALUES
  'fair',
  'blue beanie, green sweater, white shirt, grey pants, bag, sneakers',
  'Reporter',
+ 32,
+ '1993-10-25',
  FALSE,
  TRUE,
  FALSE
@@ -316,6 +338,8 @@ INSERT INTO Person VALUES
  'darkbrown',
  'yellow jacket, blue jumpsuit, brown bag, gold earrings, white sneakers',
  'Market employee',
+ 36,
+ '1990-05-08',
  FALSE,
  TRUE,
  FALSE
@@ -329,6 +353,8 @@ INSERT INTO Person VALUES
  'tan',
  'dark blue coat, white shirt, blue scarf, grey trousers, brown bag, brown boots',
  'Watchmaker',
+ 58,
+ '1968-01-17',
  FALSE,
  TRUE,
  FALSE
@@ -342,6 +368,8 @@ INSERT INTO Person VALUES
  'mediumbrown',
  'green coat, yellow shirt, red scarf, red pants, brown boots, gold jewelry',
  'Art dealer',
+ 45,
+ '1980-09-29',
  FALSE,
  TRUE,
  FALSE
@@ -355,6 +383,8 @@ INSERT INTO Person VALUES
  'fair',
  'black leather jacket, red t-shirt, green jeans, chains, gloves, black boots',
  'Customer',
+ 30,
+ '1995-06-06',
  FALSE,
  TRUE,
  FALSE
@@ -368,6 +398,8 @@ INSERT INTO Person VALUES
  'mediumbrown',
  'blue dress, white cardigan, blue scarf, name tag, gold earrings, blue shoes',
  'Jewelry employee',
+ 28,
+ '1998-04-13',
  FALSE,
  TRUE,
  FALSE
@@ -381,6 +413,8 @@ INSERT INTO Person VALUES
  'fair',
  'white blouse, blue vest, blue long skirt, blue scarf, glasses, name tag, blue shoes',
  'Senior jewelry employee',
+ 61,
+ '1964-12-02',
  FALSE,
  TRUE,
  FALSE
@@ -394,6 +428,8 @@ INSERT INTO Person VALUES
  'olive',
  'blue suit, white turtleneck, name tag, gold necklace, blue shoes',
  'Jewelry employee',
+ 26,
+ '1999-07-21',
  FALSE,
  TRUE,
  FALSE
@@ -407,6 +443,8 @@ INSERT INTO Person VALUES
  'darkbrown',
  'white shirt, blue vest, blue tie, blue trousers, name tag, brown shoes',
  'Jewelry employee',
+ 39,
+ '1987-02-18',
  FALSE,
  TRUE,
  FALSE
@@ -420,6 +458,8 @@ INSERT INTO Person VALUES
  'fair',
  'blue blazer, white blouse, blue skirt, blue scarf, name tag, black shoes',
  'Jewelry employee',
+ 33,
+ '1992-10-12',
  FALSE,
  TRUE,
  FALSE
@@ -433,6 +473,8 @@ INSERT INTO Person VALUES
  'mediumbrown',
  'pink coat, blue blouse, white pants, gold earrings, bracelets, shoes',
  'Customer',
+ 41,
+ '1985-03-04',
  FALSE,
  TRUE,
  FALSE
@@ -446,6 +488,8 @@ INSERT INTO Person VALUES
  'darkbrown',
  'blue blazer, white turtleneck, grey trousers, grey cap, glasses, cane, red shoes',
  'Collector',
+ 67,
+ '1958-08-26',
  FALSE,
  TRUE,
  FALSE
@@ -459,6 +503,8 @@ INSERT INTO Person VALUES
  'fair',
  'red jacket, white t-shirt, blue skirt, black socks, white sneakers, black bag',
  'Customer',
+ 23,
+ '2003-05-15',
  FALSE,
  TRUE,
  FALSE
@@ -472,6 +518,8 @@ INSERT INTO Person VALUES
  'tan',
  'orange vest, blue shirt, green pants, black watch, brown boots',
  'Delivery driver',
+ 37,
+ '1988-11-01',
  FALSE,
  TRUE,
  FALSE
@@ -485,6 +533,8 @@ INSERT INTO Person VALUES
  'fair',
  'purple cardigan, yellow blouse, green long skirt, pearl earrings, glasses, red shoes',
  'Customer',
+ 72,
+ '1954-04-20',
  FALSE,
  TRUE,
  FALSE
@@ -498,6 +548,8 @@ INSERT INTO Person VALUES
  'fair',
  'blue blouse, black skirt, black tights, gold earrings, black shoes',
  'Customer',
+ 25,
+ '2001-01-07',
  FALSE,
  TRUE,
  FALSE
@@ -511,6 +563,8 @@ INSERT INTO Person VALUES
  'mediumbrown',
  'yellow shirt, black turtleneck, black trousers, black boots, watch, necklace',
  'Customer',
+ 29,
+ '1996-06-24',
  FALSE,
  TRUE,
  FALSE
@@ -524,6 +578,8 @@ INSERT INTO Person VALUES
  'olive',
  'brown coat, black turtleneck, dark trousers, black belt, black shoes',
  'Customer',
+ 44,
+ '1981-09-10',
  FALSE,
  TRUE,
  FALSE
@@ -537,6 +593,8 @@ INSERT INTO Person VALUES
  'darkbrown',
  'red turtleneck, brown trousers, brown belt, gold necklace, brown boots',
  'Customer',
+ 31,
+ '1994-12-28',
  FALSE,
  TRUE,
  FALSE
@@ -550,6 +608,8 @@ INSERT INTO Person VALUES
  'fair',
  'green jacket, white shirt, blue jeans, brown belt, brown shoes',
  'Customer',
+ 46,
+ '1980-02-05',
  FALSE,
  TRUE,
  FALSE
